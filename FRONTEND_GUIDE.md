@@ -1,0 +1,994 @@
+# Guía de Integración Frontend - Secret Santa API
+
+Esta guía proporciona toda la información necesaria para integrar el frontend con la API de Secret Santa. Incluye autenticación, endpoints, modelos de datos, validaciones, permisos y ejemplos de uso.
+
+## Configuración Base
+
+### URL Base de la API
+```
+Base URL: http://localhost:4000 (desarrollo)
+```
+
+### Headers Comunes
+```javascript
+const headers = {
+  'Content-Type': 'application/json',
+  'Authorization': `Bearer ${token}` // Para endpoints protegidos
+}
+```
+
+## Autenticación
+
+### Roles de Usuario
+- **participant**: Puede ver sus propios eventos y asignaciones
+- **organizer**: Puede crear y gestionar eventos propios
+- **admin**: Acceso completo a todos los eventos y usuarios
+
+### Flujo de Registro
+1. **POST /auth/register** - Registrar usuario
+2. **POST /auth/verify-otp** - Verificar email con OTP
+3. **POST /auth/login** - Iniciar sesión
+
+### Flujo de Invitación
+1. **POST /auth/invite** - Enviar invitación (por organizador)
+2. **POST /auth/verify** - Completar verificación con contraseña
+
+### Token JWT
+- Expira en 24 horas
+- Incluir en header `Authorization: Bearer <token>`
+- Contiene: `{ userId, role }`
+
+## Endpoints de la API
+
+### Autenticación
+
+#### POST /auth/register
+Registra un nuevo usuario y envía OTP de verificación.
+
+**Request:**
+```json
+{
+  "name": "string (1-255 chars)",
+  "email": "string (email válido)",
+  "password": "string (8-255 chars)"
+}
+```
+
+**Response (201):**
+```json
+{
+  "user": {
+    "id": "string",
+    "name": "string",
+    "email": "string",
+    "role": "organizer",
+    "email_verified": false
+  },
+  "requires_verification": true,
+  "message": "User registered. Please check your email for OTP verification."
+}
+```
+
+#### POST /auth/verify-otp
+Verifica el código OTP enviado por email.
+
+**Request:**
+```json
+{
+  "email": "string",
+  "otp": "string (6 dígitos)"
+}
+```
+
+**Response (200):**
+```json
+{
+  "token": "string",
+  "user": {
+    "id": "string",
+    "name": "string",
+    "email": "string",
+    "role": "string",
+    "email_verified": true
+  },
+  "message": "Email verified successfully"
+}
+```
+
+#### POST /auth/login
+Inicia sesión de usuario.
+
+**Request:**
+```json
+{
+  "email": "string",
+  "password": "string"
+}
+```
+
+**Response (200):**
+```json
+{
+  "token": "string",
+  "user": {
+    "id": "string",
+    "name": "string",
+    "email": "string",
+    "role": "string",
+    "email_verified": true
+  }
+}
+```
+
+#### POST /auth/invite
+Invita a un usuario a unirse a un evento (requiere autenticación).
+
+**Request:**
+```json
+{
+  "name": "string",
+  "email": "string",
+  "eventId": "string (UUID)"
+}
+```
+
+**Response (201):**
+```json
+{
+  "invitationLink": "string"
+}
+```
+
+#### POST /auth/verify
+Completa la verificación de cuenta con contraseña.
+
+**Request:**
+```json
+{
+  "token": "string (UUID)",
+  "password": "string (8-255 chars)"
+}
+```
+
+**Response (200):**
+```json
+{
+  "token": "string",
+  "user": {
+    "id": "string",
+    "name": "string",
+    "email": "string",
+    "role": "string",
+    "email_verified": true
+  },
+  "message": "Account verified and password set successfully"
+}
+```
+
+### Eventos
+
+#### GET /events
+Obtiene todos los eventos accesibles para el usuario.
+
+**Auth:** Bearer token requerido
+
+**Response (200):**
+```json
+[
+  {
+    "id": "string",
+    "owner_id": "string",
+    "name": "string",
+    "participants": [...],
+    "rules": {...},
+    "assignments": [...],
+    "createdAt": "string",
+    "assignedAt": "string"
+  }
+]
+```
+
+#### POST /events
+Crea un nuevo evento.
+
+**Auth:** Bearer token requerido (organizer+)
+
+**Request:**
+```json
+{
+  "name": "string (1-255 chars)"
+}
+```
+
+**Response (201):**
+```json
+{
+  "id": "string",
+  "owner_id": "string",
+  "name": "string",
+  "participants": [],
+  "rules": {},
+  "createdAt": "string"
+}
+```
+
+#### GET /events/{id}
+Obtiene detalles de un evento específico.
+
+**Auth:** Bearer token requerido
+
+**Parameters:**
+- `id`: UUID del evento
+
+**Response (200):**
+```json
+{
+  "id": "string",
+  "owner_id": "string",
+  "name": "string",
+  "participants": [...],
+  "rules": {...},
+  "assignments": [...],
+  "createdAt": "string",
+  "assignedAt": "string"
+}
+```
+
+#### PUT /events/{id}
+Actualiza un evento.
+
+**Auth:** Bearer token requerido (propietario o admin)
+
+**Parameters:**
+- `id`: UUID del evento
+
+**Request:**
+```json
+{
+  "name": "string (1-255 chars)"
+}
+```
+
+#### DELETE /events/{id}
+Elimina un evento.
+
+**Auth:** Bearer token requerido (propietario o admin)
+
+**Parameters:**
+- `id`: UUID del evento
+
+### Participantes
+
+#### GET /events/{eventId}/participants
+Obtiene participantes de un evento.
+
+**Auth:** Bearer token requerido
+
+**Parameters:**
+- `eventId`: UUID del evento
+
+**Response (200):**
+```json
+[
+  {
+    "id": "string",
+    "event_id": "string",
+    "name": "string",
+    "email": "string",
+    "phone": "string",
+    "group_id": "string"
+  }
+]
+```
+
+#### POST /events/{eventId}/participants
+Agrega un participante a un evento.
+
+**Auth:** Bearer token requerido (propietario o admin)
+
+**Parameters:**
+- `eventId`: UUID del evento
+
+**Request:**
+```json
+{
+  "name": "string (1-255 chars)",
+  "email": "string (email válido)",
+  "phone": "string (opcional, max 50 chars)",
+  "groupId": "string (UUID opcional)"
+}
+```
+
+**Response (201):**
+```json
+{
+  "id": "string",
+  "event_id": "string",
+  "name": "string",
+  "email": "string",
+  "phone": "string",
+  "group_id": "string"
+}
+```
+
+#### PUT /events/{eventId}/participants/{id}
+Actualiza un participante.
+
+**Auth:** Bearer token requerido (propietario o admin)
+
+**Parameters:**
+- `eventId`: UUID del evento
+- `id`: UUID del participante
+
+**Request:**
+```json
+{
+  "name": "string (1-255 chars)",
+  "email": "string (email válido)",
+  "phone": "string (opcional)",
+  "groupId": "string (UUID opcional)"
+}
+```
+
+#### DELETE /events/{eventId}/participants/{id}
+Elimina un participante.
+
+**Auth:** Bearer token requerido (propietario o admin)
+
+**Parameters:**
+- `eventId`: UUID del evento
+- `id`: UUID del participante
+
+### Reglas
+
+#### GET /events/{eventId}/rules
+Obtiene reglas de un evento.
+
+**Auth:** Bearer token requerido
+
+**Parameters:**
+- `eventId`: UUID del evento
+
+**Response (200):**
+```json
+{
+  "avoidSameGroup": false,
+  "maxShuffleAttempts": 1000,
+  "avoidPreviousAssignments": false
+}
+```
+
+#### PUT /events/{eventId}/rules
+Actualiza reglas de un evento.
+
+**Auth:** Bearer token requerido (propietario o admin)
+
+**Parameters:**
+- `eventId`: UUID del evento
+
+**Request:**
+```json
+{
+  "avoidSameGroup": "boolean (opcional)",
+  "maxShuffleAttempts": "number (1-10000, opcional)",
+  "avoidPreviousAssignments": "boolean (opcional)"
+}
+```
+
+### Asignaciones
+
+#### GET /events/{eventId}/assignments
+Obtiene asignaciones de un evento.
+
+**Auth:** Bearer token requerido (propietario o admin)
+
+**Parameters:**
+- `eventId`: UUID del evento
+
+**Response (200):**
+```json
+[
+  {
+    "giverId": "string",
+    "receiverId": "string"
+  }
+]
+```
+
+#### POST /events/{eventId}/assignments
+Genera asignaciones para un evento y envía emails.
+
+**Auth:** Bearer token requerido (propietario o admin)
+
+**Parameters:**
+- `eventId`: UUID del evento
+
+**Response (201):**
+```json
+{
+  "assignments": [
+    {
+      "giverId": "string",
+      "receiverId": "string"
+    }
+  ],
+  "emailsSent": 5,
+  "message": "Assignments generated and 5 notification emails sent"
+}
+```
+
+#### GET /me/assignment
+Obtiene la asignación del usuario actual.
+
+**Auth:** Bearer token requerido
+
+**Response (200):**
+```json
+{
+  "eventId": "string",
+  "eventName": "string",
+  "receiverName": "string",
+  "receiverEmail": "string"
+}
+```
+
+#### GET /events/{eventId}/my-info
+Obtiene información específica del participante en un evento.
+
+**Auth:** Bearer token requerido
+
+**Parameters:**
+- `eventId`: UUID del evento
+
+**Response (200):**
+```json
+{
+  "event": {
+    "id": "string",
+    "name": "string",
+    "createdAt": "string",
+    "assignedAt": "string"
+  },
+  "myRole": "participant|organizer|admin",
+  "myInfo": {
+    "id": "string",
+    "name": "string",
+    "email": "string"
+  }
+}
+```
+
+### Administración
+
+#### GET /admin/dashboard
+Obtiene estadísticas del dashboard de admin.
+
+**Auth:** Bearer token requerido (admin)
+
+**Response (200):**
+```json
+{
+  "message": "Admin dashboard data",
+  "stats": {
+    "totalUsers": 100,
+    "totalEvents": 50,
+    "totalParticipants": 500,
+    "recentEvents": 10,
+    "activeEvents": 25
+  },
+  "timestamp": "2025-11-22T17:42:13.771Z"
+}
+```
+
+#### GET /admin/events
+Obtiene todos los eventos (vista admin).
+
+**Auth:** Bearer token requerido (admin)
+
+**Response (200):**
+```json
+{
+  "message": "All events (admin view)",
+  "events": [...],
+  "total": 50
+}
+```
+
+#### GET /admin/users
+Obtiene todos los usuarios (vista admin).
+
+**Auth:** Bearer token requerido (admin)
+
+**Response (200):**
+```json
+{
+  "message": "All users (admin view)",
+  "users": [...],
+  "total": 100
+}
+```
+
+### Health Checks
+
+#### GET /health
+Verifica que el servidor esté ejecutándose (Liveness Probe).
+
+**Response (200):**
+```json
+{
+  "status": "ok",
+  "timestamp": "2025-11-22T18:10:00.000Z"
+}
+```
+
+#### GET /ready
+Verifica que el servidor esté listo para recibir tráfico (Readiness Probe).
+
+**Response (200):**
+```json
+{
+  "status": "ready",
+  "timestamp": "2025-11-22T18:10:00.000Z"
+}
+```
+
+**Response (503):**
+```json
+{
+  "status": "not ready",
+  "error": "Database connection failed"
+}
+```
+
+## Modelos de Datos
+
+### Event
+```typescript
+interface Event {
+  id: string;
+  owner_id: string;
+  name: string;
+  participants: Participant[];
+  rules: Rules;
+  assignments?: Assignment[];
+  createdAt: Date;
+  assignedAt?: Date;
+}
+```
+
+### Participant
+```typescript
+interface Participant {
+  id: string;
+  event_id: string;
+  name: string;
+  email: string;
+  phone?: string;
+  group_id?: string;
+}
+```
+
+### Rules
+```typescript
+interface Rules {
+  avoidSameGroup?: boolean;
+  maxShuffleAttempts?: number;
+  avoidPreviousAssignments?: boolean;
+}
+```
+
+### Assignment
+```typescript
+interface Assignment {
+  giverId: string;
+  receiverId: string;
+}
+```
+
+### User
+```typescript
+interface User {
+  id: string;
+  email: string;
+  name: string;
+  role: 'participant' | 'organizer' | 'admin';
+  email_verified?: boolean;
+}
+```
+
+## Validaciones
+
+### Esquemas de Validación
+- **registerSchema**: name (1-255), email (válido), password (8-255)
+- **loginSchema**: email (válido), password (requerido)
+- **verifyOtpSchema**: email (válido), otp (6 dígitos numéricos)
+- **inviteUserSchema**: name (1-255), email (válido), eventId (UUID)
+- **completeVerificationSchema**: token (UUID), password (8-255)
+- **createEventSchema**: name (1-255)
+- **updateEventSchema**: name (1-255)
+- **createParticipantSchema**: name (1-255), email (válido), phone (opcional, max 50), groupId (opcional, UUID)
+- **updateParticipantSchema**: igual que createParticipantSchema
+- **rulesSchema**: avoidSameGroup (boolean opcional), maxShuffleAttempts (1-10000 opcional), avoidPreviousAssignments (boolean opcional)
+- **uuidParamSchema**: string UUID válido
+
+### Manejo de Errores de Validación
+Los errores de validación retornan:
+```json
+{
+  "error": "field1: error message, field2: error message"
+}
+```
+
+## Permisos y Autorización
+
+### Jerarquía de Roles
+1. **participant** (nivel 1): Acceso limitado
+2. **organizer** (nivel 2): Gestión de eventos propios
+3. **admin** (nivel 3): Acceso completo
+
+### Permisos por Rol
+
+#### Participant
+- READ_OWN_PROFILE
+- READ_OWN_ASSIGNMENT
+- READ_EVENT (solo eventos donde participa)
+
+#### Organizer
+- Todos los permisos de Participant
+- UPDATE_OWN_PROFILE
+- CREATE_EVENT
+- READ_EVENT, UPDATE_EVENT, DELETE_EVENT (solo eventos propios)
+- MANAGE_PARTICIPANTS (solo eventos propios)
+- MANAGE_RULES (solo eventos propios)
+- GENERATE_ASSIGNMENTS (solo eventos propios)
+- READ_ASSIGNMENTS (solo eventos propios)
+
+#### Admin
+- Todos los permisos de Organizer
+- MANAGE_ALL_EVENTS
+- MANAGE_USERS
+- SYSTEM_ADMIN
+- VIEW_ADMIN_DASHBOARD
+- VIEW_ALL_EVENTS
+- VIEW_ALL_USERS
+- AUDIT_SYSTEM
+
+### Middleware de Autenticación
+- **authMiddleware**: Verifica token JWT
+- **requireOrganizer**: Requiere rol organizer o superior
+- **requireAdmin**: Requiere rol admin
+- **requireEventAccess**: Verifica propiedad del evento o rol admin
+- **otpRateLimit**: Limita intentos de verificación OTP (5 por 15 min)
+
+## Emails y Notificaciones
+
+### Tipos de Email
+1. **OTP Verification**: Código de 6 dígitos para verificación de email
+2. **Secret Santa Assignment**: Notificación de asignación con nombre del receptor
+3. **Event Invitation**: Invitación para unirse a un evento con enlace de verificación
+
+### Plantillas
+- Ubicadas en `src/templates/emails/`
+- Variables reemplazadas: `{{variable}}`
+- En desarrollo: emails se envían a `DEV_EMAIL` si está configurado
+
+### Configuración de Email
+- Usa Resend API
+- API Key: `RESEND_API_KEY`
+- Remitente: `Secret Santa <onboarding@resend.dev>` (desarrollo)
+
+## Webhooks
+
+### Eventos de Webhook
+- **event.created**: Cuando se crea un evento
+- **assignments.generated**: Cuando se generan asignaciones
+
+### Payload del Webhook
+```json
+{
+  "eventType": "string",
+  "data": {
+    // Datos específicos del evento
+  },
+  "timestamp": "string"
+}
+```
+
+### Configuración
+- Webhooks registrados programáticamente
+- Soporte para secret de verificación
+- Headers: `Content-Type: application/json`, `X-Webhook-Secret` (opcional)
+
+## Manejo de Errores
+
+### Códigos de Estado HTTP
+- **200**: OK
+- **201**: Created
+- **400**: Bad Request (validación fallida)
+- **401**: Unauthorized (token inválido)
+- **403**: Forbidden (permisos insuficientes)
+- **404**: Not Found
+- **429**: Too Many Requests (rate limit)
+- **500**: Internal Server Error
+
+### Formato de Error
+```json
+{
+  "error": "Mensaje de error descriptivo"
+}
+```
+
+En desarrollo, incluye stack trace adicional.
+
+## Configuración del Entorno
+
+### Variables de Entorno Requeridas
+```env
+DATABASE_URL=mysql://user:password@localhost:3306/secret_santa
+JWT_SECRET=your_jwt_secret_key
+RESEND_API_KEY=your_resend_api_key
+```
+
+### Variables Opcionales
+```env
+PORT=4000
+NODE_ENV=development
+LOG_LEVEL=info
+DEV_EMAIL=user@example.com
+FRONTEND_URL=http://localhost:3000
+ALLOWED_ORIGINS=http://localhost:3000,https://your-frontend-domain.com
+```
+
+## Observabilidad y Monitoreo
+
+### Health Checks
+La API incluye endpoints de health checks para monitoreo en producción:
+
+#### GET /health (Liveness Probe)
+Verifica que el servidor esté ejecutándose.
+
+**Response (200):**
+```json
+{
+  "status": "ok",
+  "timestamp": "2025-11-22T18:10:00.000Z"
+}
+```
+
+#### GET /ready (Readiness Probe)
+Verifica que el servidor esté listo para recibir tráfico (base de datos conectada).
+
+**Response (200):**
+```json
+{
+  "status": "ready",
+  "timestamp": "2025-11-22T18:10:00.000Z"
+}
+```
+
+**Response (503 - Service Unavailable):**
+```json
+{
+  "status": "not ready",
+  "error": "Database connection failed"
+}
+```
+
+### Server Timing
+La API incluye el middleware `timing` de Hono que agrega headers `Server-Timing` a todas las respuestas HTTP. Estos headers permiten medir el tiempo de respuesta de diferentes partes del procesamiento.
+
+**Headers de ejemplo:**
+```
+Server-Timing: db;dur=45, algo;dur=120, total;dur=165
+```
+
+### Logging
+El sistema de logging está configurado para producción:
+
+- **Desarrollo**: Logs coloreados en consola + archivos locales
+- **Producción**: Logs JSON estructurados solo en stdout (sin archivos)
+
+**Configuración por entorno:**
+```javascript
+// En desarrollo: colores + archivos
+// En producción: JSON a stdout
+```
+
+**Ejemplo de log JSON:**
+```json
+{
+  "level": "info",
+  "message": "User registered",
+  "service": "secret-santa-api",
+  "timestamp": "2025-11-22T18:10:00.000Z",
+  "userId": "uuid",
+  "email": "user@example.com"
+}
+```
+
+### Métricas Recomendadas
+Para un setup completo de monitoreo en producción, considera:
+
+1. **APM (Application Performance Monitoring)**: DataDog, New Relic
+2. **Log Aggregation**: ELK Stack, CloudWatch Logs
+3. **Health Checks**: Kubernetes liveness/readiness probes
+4. **Metrics**: Response times, error rates, database connections
+
+## Ejemplos de Integración
+
+### Registro y Login
+```javascript
+// Registro
+const register = async (name, email, password) => {
+  const response = await fetch('/auth/register', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ name, email, password })
+  });
+  const data = await response.json();
+  if (response.ok) {
+    // Esperar OTP
+    return data;
+  }
+  throw new Error(data.error);
+};
+
+// Verificar OTP
+const verifyOTP = async (email, otp) => {
+  const response = await fetch('/auth/verify-otp', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ email, otp })
+  });
+  const data = await response.json();
+  if (response.ok) {
+    localStorage.setItem('token', data.token);
+    return data;
+  }
+  throw new Error(data.error);
+};
+
+// Login
+const login = async (email, password) => {
+  const response = await fetch('/auth/login', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ email, password })
+  });
+  const data = await response.json();
+  if (response.ok) {
+    localStorage.setItem('token', data.token);
+    return data;
+  }
+  throw new Error(data.error);
+};
+```
+
+### Gestión de Eventos
+```javascript
+const getAuthHeaders = () => ({
+  'Content-Type': 'application/json',
+  'Authorization': `Bearer ${localStorage.getItem('token')}`
+});
+
+// Obtener eventos
+const getEvents = async () => {
+  const response = await fetch('/events', {
+    headers: getAuthHeaders()
+  });
+  return response.json();
+};
+
+// Crear evento
+const createEvent = async (name) => {
+  const response = await fetch('/events', {
+    method: 'POST',
+    headers: getAuthHeaders(),
+    body: JSON.stringify({ name })
+  });
+  return response.json();
+};
+
+// Agregar participante
+const addParticipant = async (eventId, participant) => {
+  const response = await fetch(`/events/${eventId}/participants`, {
+    method: 'POST',
+    headers: getAuthHeaders(),
+    body: JSON.stringify(participant)
+  });
+  return response.json();
+};
+
+// Generar asignaciones
+const generateAssignments = async (eventId) => {
+  const response = await fetch(`/events/${eventId}/assignments`, {
+    method: 'POST',
+    headers: getAuthHeaders()
+  });
+  return response.json();
+};
+
+// Obtener asignación propia
+const getMyAssignment = async () => {
+  const response = await fetch('/me/assignment', {
+    headers: getAuthHeaders()
+  });
+  return response.json();
+};
+```
+
+### Manejo de Errores Global
+```javascript
+const handleApiError = (error) => {
+  if (error.message.includes('Invalid or expired token')) {
+    // Redirigir a login
+    localStorage.removeItem('token');
+    window.location.href = '/login';
+  } else if (error.message.includes('Access denied')) {
+    // Mostrar mensaje de permisos
+    alert('No tienes permisos para esta acción');
+  } else {
+    // Error genérico
+    alert('Error: ' + error.message);
+  }
+};
+```
+
+## Consideraciones de Seguridad
+
+1. **Almacenamiento de Token**: Usar localStorage o secure cookies
+2. **Validación**: Siempre validar datos en frontend antes de enviar
+3. **Rate Limiting**: Respetar límites de API (ej: OTP cada 15 min)
+4. **HTTPS**: Usar HTTPS en producción
+5. **CORS**: Configurar CORS apropiadamente
+6. **Input Sanitization**: Sanitizar todos los inputs del usuario
+
+## Testing
+
+### Tests Unitarios
+- **Framework**: Jest con ts-jest para ES modules
+- **Cobertura**: Algoritmo de Secret Santa completamente probado
+- **Configuración**: 100% tipado con TypeScript
+- **Ejecución**: `npm test` - 5/5 tests pasan
+
+### Ejemplos de Tests
+```typescript
+import { SecretSantaService } from '../../src/services/SecretSanta.js'
+import type { Participant } from '../../src/domain/Participant.js'
+
+describe('SecretSantaService', () => {
+  it('should generate valid assignments for 3 participants', () => {
+    const service = new SecretSantaService({
+      participants: mockParticipants
+    })
+    const assignments = service.run()
+    expect(assignments).toHaveLength(3)
+  })
+})
+```
+
+## Logging y Monitoreo
+
+### Configuración por Entorno
+- **Desarrollo**: Logs coloreados en consola + archivos locales (`logs/error.log`, `logs/combined.log`)
+- **Producción**: Logs JSON estructurados solo en stdout (compatible con Docker/Kubernetes)
+
+### Niveles de Log
+- `error`: Errores críticos
+- `warn`: Advertencias
+- `info`: Información general (default)
+- `debug`: Información detallada para debugging
+
+### Formato JSON (Producción)
+```json
+{
+  "level": "info",
+  "message": "Assignments generated",
+  "service": "secret-santa-api",
+  "timestamp": "2025-11-22T18:10:00.000Z",
+  "eventId": "uuid",
+  "assignmentsCount": 5
+}
+```
+
+Esta guía cubre toda la funcionalidad necesaria para integrar completamente el frontend con la API de Secret Santa.
