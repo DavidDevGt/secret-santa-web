@@ -6,12 +6,13 @@ import Login from '@/components/Login.vue';
 import Register from '@/components/Register.vue';
 import EventList from '@/components/EventList.vue';
 import EventForm from '@/components/EventForm.vue';
+import EventDetail from '@/components/EventDetail.vue';
 
 const authStore = useAuthStore();
 const eventStore = useEventStore();
 
 const showRegister = ref(false);
-const currentView = ref<'list' | 'create' | 'edit'>('list');
+const currentView = ref<'list' | 'create' | 'edit' | 'detail'>('list');
 const editingEventId = ref<string | undefined>();
 
 onMounted(() => {
@@ -38,6 +39,11 @@ const showCreateEvent = () => {
 
 const showEditEvent = (id: string) => {
   currentView.value = 'edit';
+  editingEventId.value = id;
+};
+
+const showDetailEvent = (id: string) => {
+  currentView.value = 'detail';
   editingEventId.value = id;
 };
 
@@ -78,9 +84,14 @@ const handleDeleteEvent = async (id: string) => {
       <EventList
         v-if="currentView === 'list'"
         @create-event="showCreateEvent"
-        @view-event="showEditEvent"
+        @view-event="showDetailEvent"
         @edit-event="showEditEvent"
         @delete-event="handleDeleteEvent"
+      />
+      <EventDetail
+        v-else-if="currentView === 'detail' && editingEventId"
+        :event-id="editingEventId"
+        @back="showEventList"
       />
       <EventForm
         v-else-if="currentView === 'create'"
@@ -88,7 +99,7 @@ const handleDeleteEvent = async (id: string) => {
         @cancel="showEventList"
       />
       <EventForm
-        v-else-if="currentView === 'edit'"
+        v-else-if="currentView === 'edit' && editingEventId"
         :event-id="editingEventId"
         @updated="handleEventUpdated"
         @cancel="showEventList"
