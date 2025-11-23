@@ -16,6 +16,7 @@ import type {
   CreateParticipantRequest,
   CreateParticipantResponse,
   Rules,
+  Assignment,
   GenerateAssignmentsResponse,
   MyAssignmentResponse,
   MyInfoResponse,
@@ -107,7 +108,7 @@ class ApiService {
   async updateEvent(id: string, data: { name: string }): Promise<void> {
     return this.request<void>(`/events/${id}`, {
       method: 'PUT',
-      body: JSON.stringify({ id, ...data })
+      body: JSON.stringify(data)
     });
   }
 
@@ -132,7 +133,7 @@ class ApiService {
   async updateParticipant(eventId: string, id: string, data: CreateParticipantRequest): Promise<void> {
     return this.request<void>(`/events/${eventId}/participants/${id}`, {
       method: 'PUT',
-      body: JSON.stringify({ id, ...data })
+      body: JSON.stringify(data)
     });
   }
 

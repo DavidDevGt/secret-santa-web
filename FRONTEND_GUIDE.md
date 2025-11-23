@@ -240,7 +240,7 @@ Actualiza un evento.
 **Auth:** Bearer token requerido (propietario o admin)
 
 **Parameters:**
-- `id`: UUID del evento
+- `id`: UUID del evento (en la URL, NO en el body)
 
 **Request:**
 ```json
@@ -249,6 +249,29 @@ Actualiza un evento.
 }
 ```
 
+**Response (200):**
+```json
+{
+  "id": "string",
+  "owner_id": "string",
+  "name": "string (nuevo nombre)",
+  "participants": [...],
+  "rules": {...},
+  "assignments": [...],
+  "createdAt": "string",
+  "assignedAt": "string"
+}
+```
+
+**Response (404):**
+```json
+{
+  "error": "Event not found"
+}
+```
+
+**Importante:** El ID del evento debe ir en la URL (`/events/{uuid}`), no en el body del request. Solo envía el campo `name` en el JSON del body.
+
 #### DELETE /events/{id}
 Elimina un evento.
 
@@ -256,6 +279,20 @@ Elimina un evento.
 
 **Parameters:**
 - `id`: UUID del evento
+
+**Response (200):**
+```json
+{
+  "message": "Event deleted"
+}
+```
+
+**Response (404):**
+```json
+{
+  "error": "Event not found"
+}
+```
 
 ### Participantes
 
@@ -915,6 +952,35 @@ const getMyAssignment = async () => {
   });
   return response.json();
 };
+
+// Actualizar evento (CORRECTO)
+const updateEvent = async (eventId, newName) => {
+  const response = await fetch(`/events/${eventId}`, {
+    method: 'PUT',
+    headers: getAuthHeaders(),
+    body: JSON.stringify({ name: newName })
+  });
+
+  if (!response.ok) {
+    const error = await response.json();
+    throw new Error(error.error);
+  }
+
+  return response.json();
+};
+
+// ❌ INCORRECTO - No enviar ID en el body
+const updateEventWrong = async (eventId, newName) => {
+  const response = await fetch('/events', {  // URL incorrecta
+    method: 'PUT',
+    headers: getAuthHeaders(),
+    body: JSON.stringify({
+      id: eventId,      // ❌ No enviar ID aquí
+      name: newName
+    })
+  });
+  return response.json();
+};
 ```
 
 ### Manejo de Errores Global
@@ -990,5 +1056,59 @@ describe('SecretSantaService', () => {
   "assignmentsCount": 5
 }
 ```
+
+## Solución de Problemas Comunes
+
+### Error "Event ID required" al editar eventos
+
+**Síntoma:** Al intentar actualizar un evento, recibes el error "Event ID required" aunque estás enviando el ID.
+
+**Causa:** El ID del evento debe ir en la URL, no en el body del request.
+
+**Solución correcta:**
+```javascript
+// ✅ CORRECTO
+const updateEvent = async (eventId, newName) => {
+  const response = await fetch(`/events/${eventId}`, {  // ID en la URL
+    method: 'PUT',
+    headers: {
+      'Content-Type': 'application/json',
+      'Authorization': `Bearer ${token}`
+    },
+    body: JSON.stringify({ name: newName })  // Solo name en el body
+  });
+  return response.json();
+};
+
+// ❌ INCORRECTO
+const updateEventWrong = async (eventId, newName) => {
+  const response = await fetch('/events', {  // URL sin ID
+    method: 'PUT',
+    headers: getAuthHeaders(),
+    body: JSON.stringify({
+      id: eventId,      // No enviar ID aquí
+      name: newName
+    })
+  });
+  return response.json();
+};
+```
+
+**Verificación:** Asegúrate de que:
+1. La URL sea `/events/{uuid}` (con el ID en la URL)
+2. El body solo contenga `{"name": "nuevo nombre"}`
+3. Tengas un token JWT válido en el header Authorization
+
+### Error "Access denied" en eventos
+
+**Causa:** Solo el owner del evento o un admin pueden editarlo.
+
+**Solución:** Verifica que el usuario autenticado sea el owner del evento o tenga rol 'admin'.
+
+### Error "Event not found"
+
+**Causa:** El ID del evento no existe o el usuario no tiene acceso.
+
+**Solución:** Verifica que el ID sea un UUID válido y que el usuario tenga permisos para ver ese evento.
 
 Esta guía cubre toda la funcionalidad necesaria para integrar completamente el frontend con la API de Secret Santa.
