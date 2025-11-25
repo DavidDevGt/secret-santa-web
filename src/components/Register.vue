@@ -74,7 +74,7 @@ const handleRegister = async () => {
   loading.value = true;
   error.value = '';
   try {
-    await authStore.register(name.value, email.value, password.value);
+    await authStore.register({ name: name.value, email: email.value, password: password.value });
     showOtp.value = true;
   } catch (err) {
     error.value = (err as Error).message;
@@ -87,7 +87,7 @@ const handleVerifyOtp = async () => {
   loading.value = true;
   error.value = '';
   try {
-    await authStore.verifyOtp(email.value, otp.value);
+    await authStore.verifyOtp({ email: email.value, otp: otp.value });
   } catch (err) {
     error.value = (err as Error).message;
   } finally {

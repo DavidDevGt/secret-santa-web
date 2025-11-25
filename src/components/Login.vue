@@ -47,7 +47,7 @@ const handleLogin = async () => {
   loading.value = true;
   error.value = '';
   try {
-    await authStore.login(email.value, password.value);
+    await authStore.login({ email: email.value, password: password.value });
   } catch (err) {
     error.value = (err as Error).message;
   } finally {

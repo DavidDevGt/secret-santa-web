@@ -33,6 +33,9 @@ const headers = {
 1. **POST /auth/invite** - Enviar invitación (por organizador)
 2. **POST /auth/verify** - Completar verificación con contraseña
 
+### Validación de Token al Cargar la App
+Para validar la sesión al refrescar la página, usa **GET /auth/verify-token** en lugar de **GET /events** para una validación más rápida y ligera que no requiere consultas a la base de datos.
+
 ### Token JWT
 - Expira en 24 horas
 - Incluir en header `Authorization: Bearer <token>`
@@ -162,6 +165,29 @@ Completa la verificación de cuenta con contraseña.
     "email_verified": true
   },
   "message": "Account verified and password set successfully"
+}
+```
+
+#### GET /auth/verify-token
+Verifica la validez del token JWT sin realizar consultas adicionales a la base de datos. Útil para validación rápida del token al cargar la aplicación.
+
+**Auth:** Bearer token requerido
+
+**Response (200):**
+```json
+{
+  "valid": true,
+  "user": {
+    "id": "string",
+    "role": "string"
+  }
+}
+```
+
+**Response (401):**
+```json
+{
+  "error": "Token expired" // o "Invalid token"
 }
 ```
 
@@ -899,6 +925,28 @@ const login = async (email, password) => {
   }
   throw new Error(data.error);
 };
+
+// Verificar token al cargar la app (recomendado)
+const verifyToken = async () => {
+  const token = localStorage.getItem('token');
+  if (!token) return null;
+
+  try {
+    const response = await fetch('/auth/verify-token', {
+      headers: { 'Authorization': `Bearer ${token}` }
+    });
+    const data = await response.json();
+    if (response.ok) {
+      return data.user; // Token válido
+    }
+    // Token inválido - limpiar y redirigir
+    localStorage.removeItem('token');
+    return null;
+  } catch (error) {
+    // Error de red - mantener token por ahora
+    return null;
+  }
+};
 ```
 
 ### Gestión de Eventos
@@ -986,7 +1034,7 @@ const updateEventWrong = async (eventId, newName) => {
 ### Manejo de Errores Global
 ```javascript
 const handleApiError = (error) => {
-  if (error.message.includes('Invalid or expired token')) {
+  if (error.message.includes('Invalid or expired token') || error.message.includes('Token expired') || error.message.includes('Invalid token')) {
     // Redirigir a login
     localStorage.removeItem('token');
     window.location.href = '/login';

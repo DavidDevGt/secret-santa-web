@@ -91,6 +91,14 @@ export interface VerifyResponse {
   message: string;
 }
 
+export interface VerifyTokenResponse {
+  valid: boolean;
+  user: {
+    id: string;
+    role: string;
+  };
+}
+
 export interface CreateEventRequest {
   name: string;
 }
