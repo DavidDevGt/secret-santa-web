@@ -27,6 +27,10 @@ export const useEventStore = defineStore('events', () => {
       .filter(event => event.canEdit || event.canViewAssignments || event.canManageParticipants);
   });
 
+  const hasAnyAssignments = computed(() => {
+    return userEvents.value.some(event => event.hasAssignments);
+  });
+
   // Helper function to enrich events with permissions
   function enrichEventWithPermissions(event: Event, user: ApiUser): Event {
     const isOwner = event.owner_id === user.id;
@@ -219,6 +223,7 @@ export const useEventStore = defineStore('events', () => {
     eventsCount,
     hasEvents,
     userEvents,
+    hasAnyAssignments,
 
     // Actions
     fetchEvents,

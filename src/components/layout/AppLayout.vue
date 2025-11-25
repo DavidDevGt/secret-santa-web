@@ -1,55 +1,53 @@
 <template>
   <div class="app-layout">
-    <header class="app-header christmas-card">
+    <header class="app-header">
       <div class="header-content">
         <!-- Logo/Brand Section -->
         <div class="brand-section">
-          <h1 class="app-title">
-            <router-link to="/" class="title-link">
-              🎄 Secret Santa
-            </router-link>
-          </h1>
+          <router-link to="/" class="title-link">
+            Secret Santa
+          </router-link>
         </div>
 
-        <!-- Desktop Navigation -->
-        <nav class="main-nav desktop-nav">
-          <router-link to="/" class="nav-link">
-            <span class="nav-icon">🏠</span>
-            Dashboard
-          </router-link>
-          <router-link to="/events" class="nav-link">
-            <span class="nav-icon">🎁</span>
-            Events
-          </router-link>
-          <router-link
-            v-if="authStore.user?.role === 'admin'"
-            to="/admin"
-            class="nav-link"
-          >
-            <span class="nav-icon">⚙️</span>
-            Admin
-          </router-link>
-        </nav>
+        <!-- Right Section: Nav + User -->
+        <div class="right-section">
+          <!-- Desktop Navigation -->
+          <nav class="main-nav desktop-nav">
+            <router-link to="/" class="nav-link">
+              Dashboard
+            </router-link>
+            <router-link to="/events" class="nav-link">
+              Events
+            </router-link>
+            <router-link
+              v-if="authStore.user?.role === 'admin'"
+              to="/admin"
+              class="nav-link"
+            >
+              Admin
+            </router-link>
+          </nav>
 
-        <!-- User Section -->
-        <div class="user-section">
-          <div class="user-info">
-            <div class="user-avatar">
-              {{ getInitials(authStore.user?.name || '') }}
+          <!-- User Section -->
+          <div class="user-section">
+            <div class="user-info">
+              <div class="user-avatar">
+                {{ getInitials(authStore.user?.name || '') }}
+              </div>
+              <div class="user-details">
+                <span class="user-name">{{ authStore.user?.name }}</span>
+                <span class="user-role">{{ authStore.user?.role }}</span>
+              </div>
             </div>
-            <div class="user-details">
-              <span class="user-name">{{ authStore.user?.name }}</span>
-              <span class="user-role">{{ authStore.user?.role }}</span>
-            </div>
+            <Button
+              variant="outline"
+              size="sm"
+              @click="handleLogout"
+              class="logout-btn"
+            >
+              Logout
+            </Button>
           </div>
-          <Button
-            variant="outline"
-            size="sm"
-            @click="handleLogout"
-            class="logout-btn"
-          >
-            Logout
-          </Button>
         </div>
 
         <!-- Mobile Menu Button -->
@@ -68,11 +66,9 @@
       <div class="mobile-nav" :class="{ open: mobileMenuOpen }">
         <nav class="mobile-nav-links">
           <router-link to="/" class="mobile-nav-link" @click="closeMobileMenu">
-            <span class="nav-icon">🏠</span>
             Dashboard
           </router-link>
           <router-link to="/events" class="mobile-nav-link" @click="closeMobileMenu">
-            <span class="nav-icon">🎁</span>
             Events
           </router-link>
           <router-link
@@ -81,7 +77,6 @@
             class="mobile-nav-link"
             @click="closeMobileMenu"
           >
-            <span class="nav-icon">⚙️</span>
             Admin
           </router-link>
         </nav>
@@ -159,9 +154,8 @@ const getInitials = (name: string): string => {
   position: sticky;
   top: 0;
   z-index: 50;
-  backdrop-filter: blur(10px);
-  background: rgba(255, 255, 255, 0.95);
-  border-bottom: 1px solid var(--color-christmas-frost);
+  background: var(--color-white);
+  border-bottom: 1px solid var(--color-gray-200);
 }
 
 .header-content {
@@ -171,7 +165,7 @@ const getInitials = (name: string): string => {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  height: 5rem;
+  height: 4rem;
   position: relative;
 }
 
@@ -181,28 +175,24 @@ const getInitials = (name: string): string => {
   align-items: center;
 }
 
-.app-title {
-  font-size: var(--font-size-xl);
-  font-weight: 700;
-  margin: 0;
-  letter-spacing: -0.025em;
-}
-
 .title-link {
   color: var(--color-primary);
   text-decoration: none;
-  transition: all 0.3s ease;
-  display: flex;
-  align-items: center;
-  gap: var(--space-sm);
-  padding: var(--space-sm) var(--space-md);
-  border-radius: var(--radius-md);
+  font-size: var(--font-size-lg);
+  font-weight: 700;
+  letter-spacing: -0.025em;
+  transition: color 0.2s ease;
 }
 
 .title-link:hover {
-  color: var(--color-accent);
-  background: rgba(217, 119, 6, 0.05);
-  transform: translateY(-1px);
+  color: var(--color-primary);
+}
+
+/* Right Section */
+.right-section {
+  display: flex;
+  align-items: center;
+  gap: var(--space-xl);
 }
 
 /* Desktop Navigation */
@@ -218,49 +208,21 @@ const getInitials = (name: string): string => {
   font-weight: 500;
   padding: var(--space-md) var(--space-lg);
   border-radius: var(--radius-md);
-  border: 1px solid transparent;
-  transition: all 0.3s ease;
+  transition: all 0.2s ease;
   font-size: var(--font-size-sm);
-  display: flex;
-  align-items: center;
-  gap: var(--space-sm);
-  position: relative;
-  overflow: hidden;
-}
-
-.nav-link::before {
-  content: '';
-  position: absolute;
-  top: 0;
-  left: -100%;
-  width: 100%;
-  height: 100%;
-  background: linear-gradient(90deg, transparent, rgba(217, 119, 6, 0.1), transparent);
-  transition: left 0.5s ease;
-}
-
-.nav-link:hover::before {
-  left: 100%;
 }
 
 .nav-link:hover {
   color: var(--color-primary);
-  background: rgba(15, 81, 50, 0.05);
-  border-color: var(--color-christmas-frost);
-  transform: translateY(-1px);
-  box-shadow: var(--shadow-christmas);
+  background: var(--color-gray-50);
 }
 
 .nav-link.router-link-active {
   color: var(--color-primary);
-  background: rgba(15, 81, 50, 0.1);
-  border-color: var(--color-accent);
-  box-shadow: 0 0 0 2px rgba(217, 119, 6, 0.2);
+  background: var(--color-gray-100);
+  font-weight: 600;
 }
 
-.nav-icon {
-  font-size: var(--font-size-base);
-}
 
 /* User Section */
 .user-section {
@@ -388,9 +350,7 @@ const getInitials = (name: string): string => {
 }
 
 .mobile-nav-link {
-  display: flex;
-  align-items: center;
-  gap: var(--space-md);
+  display: block;
   padding: var(--space-md);
   color: var(--color-gray-600);
   text-decoration: none;
@@ -401,14 +361,14 @@ const getInitials = (name: string): string => {
 }
 
 .mobile-nav-link:hover {
-  background: rgba(15, 81, 50, 0.05);
+  background: var(--color-gray-50);
   color: var(--color-primary);
 }
 
 .mobile-nav-link.router-link-active {
-  background: rgba(15, 81, 50, 0.1);
+  background: var(--color-gray-100);
   color: var(--color-primary);
-  border-left: 3px solid var(--color-accent);
+  font-weight: 600;
 }
 
 .mobile-user-section {
@@ -453,14 +413,10 @@ const getInitials = (name: string): string => {
 @media (max-width: 768px) {
   .header-content {
     padding: 0 var(--space-md);
-    height: 4rem;
+    height: 3.5rem;
   }
 
-  .main-nav {
-    display: none;
-  }
-
-  .user-section {
+  .right-section {
     display: none;
   }
 
@@ -472,8 +428,8 @@ const getInitials = (name: string): string => {
     display: block;
   }
 
-  .app-title {
-    font-size: var(--font-size-lg);
+  .title-link {
+    font-size: var(--font-size-base);
   }
 
   .app-main {

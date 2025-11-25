@@ -44,6 +44,8 @@ const loading = ref(false);
 const error = ref('');
 
 const handleLogin = async () => {
+  if (loading.value) return; // Prevent duplicate submissions
+
   loading.value = true;
   error.value = '';
   try {

@@ -10,10 +10,10 @@
   --color-secondary-light: #F0F9FF; /* sky-50 */
   --color-secondary-dark: #BAE6FD; /* sky-200 */
 
-  /* Accent Colors - Warm Gold */
-  --color-accent: #D97706; /* amber-600 */
-  --color-accent-light: #F59E0B; /* amber-500 */
-  --color-accent-dark: #B45309; /* amber-700 */
+  /* Accent Colors - Christmas Red */
+  --color-accent: #7F1D1D; /* christmas red */
+  --color-accent-light: #991B1B; /* red-800 */
+  --color-accent-dark: #450A0A; /* red-950 */
 
   /* Christmas Specific Colors */
   --color-christmas-red: #7F1D1D; /* red-900 - subtle mulled wine */

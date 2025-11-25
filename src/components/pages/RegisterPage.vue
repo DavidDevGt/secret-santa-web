@@ -165,7 +165,7 @@ const isFormValid = computed(() => {
 });
 
 const handleRegister = async () => {
-  if (!isFormValid.value) return;
+  if (!isFormValid.value || loading.value) return; // Prevent duplicate submissions
 
   loading.value = true;
   error.value = null;
@@ -189,7 +189,7 @@ const handleRegister = async () => {
 };
 
 const handleVerifyOtp = async () => {
-  if (!otp.value || otp.value.length !== 6) return;
+  if (!otp.value || otp.value.length !== 6 || verifying.value) return; // Prevent duplicate submissions
 
   verifying.value = true;
   error.value = null;
@@ -205,6 +205,8 @@ const handleVerifyOtp = async () => {
 };
 
 const resendOtp = async () => {
+  if (loading.value) return; // Prevent duplicate submissions
+
   loading.value = true;
   error.value = null;
 

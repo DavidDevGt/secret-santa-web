@@ -71,6 +71,8 @@ const loading = ref(false);
 const error = ref('');
 
 const handleRegister = async () => {
+  if (loading.value) return; // Prevent duplicate submissions
+
   loading.value = true;
   error.value = '';
   try {
@@ -84,6 +86,8 @@ const handleRegister = async () => {
 };
 
 const handleVerifyOtp = async () => {
+  if (loading.value) return; // Prevent duplicate submissions
+
   loading.value = true;
   error.value = '';
   try {

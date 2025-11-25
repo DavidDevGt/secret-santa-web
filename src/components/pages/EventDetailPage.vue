@@ -34,7 +34,7 @@
           <Button @click="goBack" variant="outline">Back to Events</Button>
           <Button
             v-if="event.canEdit"
-            @click="editEvent"
+            @click="showEditModal = true"
             variant="outline"
           >
             Edit Event
@@ -161,15 +161,15 @@
         <div v-if="!showRulesForm" class="rules-display">
           <div class="rule-item">
             <span class="rule-label">Avoid Same Group:</span>
-            <span class="rule-value">{{ event.rules.avoidSameGroup ? 'Yes' : 'No' }}</span>
+            <span class="rule-value">{{ event.rules?.avoidSameGroup ? 'Yes' : 'No' }}</span>
           </div>
           <div class="rule-item">
             <span class="rule-label">Max Shuffle Attempts:</span>
-            <span class="rule-value">{{ event.rules.maxShuffleAttempts || 1000 }}</span>
+            <span class="rule-value">{{ event.rules?.maxShuffleAttempts || 1000 }}</span>
           </div>
           <div class="rule-item">
             <span class="rule-label">Avoid Previous Assignments:</span>
-            <span class="rule-value">{{ event.rules.avoidPreviousAssignments ? 'Yes' : 'No' }}</span>
+            <span class="rule-value">{{ event.rules?.avoidPreviousAssignments ? 'Yes' : 'No' }}</span>
           </div>
         </div>
 
@@ -256,6 +256,48 @@
           {{ assignmentMessage }}
         </div>
       </section>
+
+      <!-- Edit Event Modal -->
+      <div v-if="showEditModal" class="modal-overlay" @click="showEditModal = false">
+        <div class="modal-content" @click.stop>
+          <div class="modal-header">
+            <h3>Edit Event</h3>
+            <button class="modal-close" @click="showEditModal = false">&times;</button>
+          </div>
+          <form @submit.prevent="handleUpdateEvent" class="modal-body">
+            <div class="form-group">
+              <label for="event-name">Event Name</label>
+              <input
+                id="event-name"
+                v-model="editForm.name"
+                type="text"
+                required
+                maxlength="255"
+                :disabled="updatingEvent"
+                placeholder="Enter event name"
+              />
+            </div>
+            <div class="modal-actions">
+              <Button
+                type="button"
+                @click="showEditModal = false"
+                variant="outline"
+                :disabled="updatingEvent"
+              >
+                Cancel
+              </Button>
+              <Button
+                type="submit"
+                variant="primary"
+                :loading="updatingEvent"
+                :disabled="!editForm.name.trim()"
+              >
+                Update Event
+              </Button>
+            </div>
+          </form>
+        </div>
+      </div>
     </div>
   </div>
 </template>
@@ -297,6 +339,13 @@ const rulesForm = ref({
 });
 const updatingRules = ref(false);
 
+// Edit Event
+const showEditModal = ref(false);
+const editForm = ref({
+  name: ''
+});
+const updatingEvent = ref(false);
+
 // Assignments
 const generating = ref(false);
 const assignmentMessage = ref('');
@@ -311,10 +360,12 @@ const loadEvent = async () => {
     if (event.value) {
       // Initialize rules form
       rulesForm.value = {
-        avoidSameGroup: event.value.rules.avoidSameGroup || false,
-        maxShuffleAttempts: event.value.rules.maxShuffleAttempts || 1000,
-        avoidPreviousAssignments: event.value.rules.avoidPreviousAssignments || false
+        avoidSameGroup: event.value.rules?.avoidSameGroup || false,
+        maxShuffleAttempts: event.value.rules?.maxShuffleAttempts || 1000,
+        avoidPreviousAssignments: event.value.rules?.avoidPreviousAssignments || false
       };
+      // Initialize edit form
+      editForm.value.name = event.value.name;
     }
   } catch (err) {
     error.value = (err as Error).message;
@@ -327,10 +378,19 @@ const goBack = () => {
   router.push('/events');
 };
 
-const editEvent = () => {
-  // Could open an edit modal or navigate to edit page
-  // For now, we'll implement inline editing later
-  alert('Edit functionality coming soon!');
+const handleUpdateEvent = async () => {
+  if (!event.value || !editForm.value.name.trim()) return;
+
+  updatingEvent.value = true;
+  try {
+    await eventStore.updateEvent(eventId, editForm.value.name.trim());
+    showEditModal.value = false;
+    await loadEvent(); // Reload to get updated name
+  } catch (err) {
+    // Error handled by store
+  } finally {
+    updatingEvent.value = false;
+  }
 };
 
 const handleAddParticipant = async () => {
@@ -691,6 +751,71 @@ onMounted(() => {
 .assignment-message {
   background-color: rgba(16, 185, 129, 0.1);
   color: var(--color-success);
+}
+
+/* Modal */
+.modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+}
+
+.modal-content {
+  background: var(--color-white);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-lg);
+  max-width: 500px;
+  width: 90%;
+  max-height: 90vh;
+  overflow-y: auto;
+}
+
+.modal-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: var(--space-lg);
+  border-bottom: 1px solid var(--color-gray-200);
+}
+
+.modal-header h3 {
+  margin: 0;
+  font-size: var(--font-size-lg);
+  font-weight: 600;
+  color: var(--color-primary);
+}
+
+.modal-close {
+  background: none;
+  border: none;
+  font-size: var(--font-size-xl);
+  cursor: pointer;
+  color: var(--color-gray-500);
+  padding: var(--space-xs);
+  border-radius: var(--radius-sm);
+  transition: color 0.2s ease;
+}
+
+.modal-close:hover {
+  color: var(--color-primary);
+}
+
+.modal-body {
+  padding: var(--space-lg);
+}
+
+.modal-actions {
+  display: flex;
+  gap: var(--space-md);
+  justify-content: flex-end;
+  margin-top: var(--space-lg);
 }
 
 /* Responsive */

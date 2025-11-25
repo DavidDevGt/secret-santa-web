@@ -42,7 +42,10 @@ const routes: RouteRecordRaw[] = [
         path: 'events/create',
         name: 'EventCreate',
         component: () => import('@/components/pages/EventCreatePage.vue'),
-        meta: { title: 'Create Event' }
+        meta: {
+          title: 'Create Event',
+          requiresRole: 'organizer'
+        }
       },
       {
         path: 'events/:id',
@@ -94,8 +97,8 @@ router.beforeEach(async (to, from, next) => {
 
   // Check role-based access
   if (to.meta.requiresRole) {
-    const requiredRole = to.meta.requiresRole as 'admin';
-    if (!authStore.user || authStore.user.role !== requiredRole) {
+    const requiredRole = to.meta.requiresRole as 'admin' | 'organizer';
+    if (!authStore.user || !authStore.hasRole(requiredRole)) {
       return next({ name: 'Dashboard' });
     }
   }

@@ -20,12 +20,21 @@
             <p>Browse and manage your events</p>
           </router-link>
           <router-link
+            v-if="authStore.hasRole('organizer') || authStore.hasRole('admin')"
             to="/events/create"
             class="action-card create-event"
           >
             <h4>Create Event</h4>
             <p>Start a new Secret Santa event</p>
           </router-link>
+          <div
+            v-if="authStore.hasRole('participant') && hasAssignment"
+            class="action-card assignment-card"
+            @click="viewMyAssignment"
+          >
+            <h4>View My Assignment</h4>
+            <p>See who you're buying a gift for</p>
+          </div>
         </div>
       </div>
     </div>
@@ -33,12 +42,13 @@
 </template>
 
 <script setup lang="ts">
-import { onMounted } from 'vue';
+import { ref, onMounted } from 'vue';
 import { useAuthStore } from '@/stores/auth';
 import { useEventStore } from '@/stores/events';
 
 const authStore = useAuthStore();
 const eventStore = useEventStore();
+const hasAssignment = ref(false);
 
 // Ensure events are loaded when dashboard mounts
 onMounted(async () => {
@@ -57,7 +67,27 @@ onMounted(async () => {
       console.error('Failed to load events in dashboard:', error);
     }
   }
+
+  // Check if user has assignment
+  if (authStore.hasRole('participant')) {
+    try {
+      await eventStore.fetchMyAssignment();
+      hasAssignment.value = true;
+    } catch (error) {
+      hasAssignment.value = false;
+      console.log('User has no assignment yet');
+    }
+  }
 });
+
+const viewMyAssignment = async () => {
+  try {
+    const assignment = await eventStore.fetchMyAssignment();
+    alert(`Your Secret Santa assignment:\n\n🎁 You need to buy a gift for: ${assignment.receiverName}\n📧 Email: ${assignment.receiverEmail}\n\nHappy gifting! 🎄`);
+  } catch (err) {
+    alert('Error loading your assignment: ' + (err as Error).message);
+  }
+};
 </script>
 
 <style scoped>
@@ -199,5 +229,21 @@ onMounted(async () => {
 
 .create-event:hover {
   box-shadow: 0 8px 25px -8px rgba(15, 23, 42, 0.3);
+}
+
+.assignment-card {
+  background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%);
+  cursor: pointer;
+}
+
+.assignment-card:hover {
+  box-shadow: 0 8px 25px -8px rgba(59, 130, 246, 0.3);
+}
+
+.assignment-card h4,
+.assignment-card p {
+  color: var(--color-white);
+  position: relative;
+  z-index: 1;
 }
 </style>

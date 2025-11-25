@@ -4,6 +4,7 @@
       <h1>My Events</h1>
       <p>Manage your Secret Santa events</p>
       <Button
+        v-if="authStore.hasRole('organizer') || authStore.hasRole('admin')"
         variant="primary"
         size="lg"
         @click="goToCreate"
@@ -28,8 +29,18 @@
     <!-- Empty State -->
     <div v-else-if="!events.length" class="empty-state">
       <h3>No events yet</h3>
-      <p>Create your first Secret Santa event to get started!</p>
-      <Button @click="goToCreate" variant="primary" size="lg">
+      <p v-if="authStore.hasRole('organizer') || authStore.hasRole('admin')">
+        Create your first Secret Santa event to get started!
+      </p>
+      <p v-else>
+        You haven't been invited to any events yet. Ask an organizer to invite you!
+      </p>
+      <Button
+        v-if="authStore.hasRole('organizer') || authStore.hasRole('admin')"
+        @click="goToCreate"
+        variant="primary"
+        size="lg"
+      >
         Create Event
       </Button>
     </div>
@@ -177,11 +188,13 @@
 import { ref, onMounted } from 'vue';
 import { useRouter } from 'vue-router';
 import { useEventStore } from '@/stores/events';
+import { useAuthStore } from '@/stores/auth';
 import Button from '@/components/ui/Button.vue';
 import type { Event } from '@/types/domain';
 
 const router = useRouter();
 const eventStore = useEventStore();
+const authStore = useAuthStore();
 
 const events = ref<Event[]>([]);
 const loading = ref(false);

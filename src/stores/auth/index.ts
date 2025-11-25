@@ -95,6 +95,12 @@ export const useAuthStore = defineStore('auth', {
     },
 
     async register(data: RegisterRequest) {
+      // Prevent duplicate registration attempts
+      if (this.loading) {
+        console.warn('Registration already in progress');
+        return;
+      }
+
       this.loading = true;
       this.error = null;
       try {
@@ -127,6 +133,12 @@ export const useAuthStore = defineStore('auth', {
     },
 
     async login(data: LoginRequest) {
+      // Prevent duplicate login attempts
+      if (this.loading) {
+        console.warn('Login already in progress');
+        return;
+      }
+
       this.loading = true;
       this.error = null;
       try {
