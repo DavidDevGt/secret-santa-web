@@ -27,13 +27,28 @@
             <h4>Create Event</h4>
             <p>Start a new Secret Santa event</p>
           </router-link>
+        </div>
+      </div>
+
+      <!-- Assignments Section -->
+      <div v-if="authStore.hasRole('participant')" class="assignments-section">
+        <h3>My Secret Santa Assignments</h3>
+        <div v-if="loadingAssignments" class="loading-state">
+          <p>Loading your assignments...</p>
+        </div>
+        <div v-else-if="assignments.length === 0" class="empty-state">
+          <p>🎄 No assignments yet! Check back after assignments are generated for your events.</p>
+        </div>
+        <div v-else class="assignments-grid">
           <div
-            v-if="authStore.hasRole('participant') && hasAssignment"
-            class="action-card assignment-card"
-            @click="viewMyAssignment"
+            v-for="assignment in assignments"
+            :key="assignment.eventId"
+            class="assignment-card"
+            @click="viewAssignment(assignment)"
           >
-            <h4>View My Assignment</h4>
-            <p>See who you're buying a gift for</p>
+            <h4>{{ assignment.eventName }}</h4>
+            <p>Click to see your assignment</p>
+            <small>🎁 Ready to gift!</small>
           </div>
         </div>
       </div>
@@ -45,10 +60,12 @@
 import { ref, onMounted } from 'vue';
 import { useAuthStore } from '@/stores/auth';
 import { useEventStore } from '@/stores/events';
+import type { MyAssignment } from '@/types/api';
 
 const authStore = useAuthStore();
 const eventStore = useEventStore();
-const hasAssignment = ref(false);
+const assignments = ref<MyAssignment[]>([]);
+const loadingAssignments = ref(false);
 
 // Ensure events are loaded when dashboard mounts
 onMounted(async () => {
@@ -68,25 +85,27 @@ onMounted(async () => {
     }
   }
 
-  // Check if user has assignment
+  // Load assignments if user is participant
   if (authStore.hasRole('participant')) {
-    try {
-      await eventStore.fetchMyAssignment();
-      hasAssignment.value = true;
-    } catch (error) {
-      hasAssignment.value = false;
-      console.log('User has no assignment yet');
-    }
+    await loadAssignments();
   }
 });
 
-const viewMyAssignment = async () => {
+const loadAssignments = async () => {
+  loadingAssignments.value = true;
   try {
-    const assignment = await eventStore.fetchMyAssignment();
-    alert(`Your Secret Santa assignment:\n\n🎁 You need to buy a gift for: ${assignment.receiverName}\n📧 Email: ${assignment.receiverEmail}\n\nHappy gifting! 🎄`);
-  } catch (err) {
-    alert('Error loading your assignment: ' + (err as Error).message);
+    assignments.value = await eventStore.fetchMyAssignment();
+    console.log('Loaded assignments:', assignments.value.length);
+  } catch (error) {
+    assignments.value = [];
+    console.log('User has no assignments yet');
+  } finally {
+    loadingAssignments.value = false;
   }
+};
+
+const viewAssignment = (assignment: MyAssignment) => {
+  alert(`🎄 ${assignment.eventName}\n\n🎁 You need to buy a gift for: ${assignment.receiverName}\n📧 Email: ${assignment.receiverEmail}\n\nHappy gifting! 🎅`);
 };
 </script>
 
@@ -245,5 +264,99 @@ const viewMyAssignment = async () => {
   color: var(--color-white);
   position: relative;
   z-index: 1;
+}
+
+/* Assignments Section */
+.assignments-section {
+  background: var(--color-white);
+  padding: var(--space-xl);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-md);
+  border: 1px solid var(--color-gray-200);
+}
+
+.assignments-section h3 {
+  font-size: var(--font-size-lg);
+  font-weight: 600;
+  color: var(--color-gray-700);
+  margin: 0 0 var(--space-lg) 0;
+}
+
+.assignments-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: var(--space-lg);
+}
+
+.assignments-grid .assignment-card {
+  background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+  cursor: pointer;
+  transition: all 0.2s ease;
+  border: none;
+  min-height: 120px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+}
+
+.assignments-grid .assignment-card:hover {
+  box-shadow: 0 8px 25px -8px rgba(16, 185, 129, 0.3);
+  transform: translateY(-2px);
+}
+
+.assignments-grid .assignment-card h4 {
+  font-size: var(--font-size-base);
+  font-weight: 600;
+  color: var(--color-white);
+  margin: 0 0 var(--space-sm) 0;
+  position: relative;
+  z-index: 1;
+}
+
+.assignments-grid .assignment-card p {
+  color: var(--color-white);
+  margin: 0 0 var(--space-sm) 0;
+  font-size: var(--font-size-sm);
+  position: relative;
+  z-index: 1;
+  opacity: 0.9;
+}
+
+.assignments-grid .assignment-card small {
+  color: var(--color-white);
+  font-size: var(--font-size-xs);
+  position: relative;
+  z-index: 1;
+  opacity: 0.8;
+}
+
+/* Loading and Empty States */
+.loading-state,
+.empty-state {
+  text-align: center;
+  padding: var(--space-xl);
+  color: var(--color-gray-600);
+}
+
+.loading-state p {
+  margin: 0;
+  font-style: italic;
+}
+
+.empty-state p {
+  margin: 0;
+  font-size: var(--font-size-base);
+  line-height: 1.6;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+  .assignments-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .assignments-section {
+    padding: var(--space-lg);
+  }
 }
 </style>

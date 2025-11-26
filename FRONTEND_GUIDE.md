@@ -545,19 +545,36 @@ Genera asignaciones para un evento y envía emails.
 ```
 
 #### GET /me/assignment
-Obtiene la asignación del usuario actual.
+Obtiene las asignaciones del usuario actual (retorna array para múltiples eventos).
 
 **Auth:** Bearer token requerido
 
 **Response (200):**
 ```json
-{
-  "eventId": "string",
-  "eventName": "string",
-  "receiverName": "string",
-  "receiverEmail": "string"
-}
+[
+  {
+    "eventId": "string",
+    "eventName": "string",
+    "receiverName": "string",
+    "receiverEmail": "string"
+  },
+  {
+    "eventId": "string2",
+    "eventName": "string2",
+    "receiverName": "string2",
+    "receiverEmail": "string2"
+  }
+]
 ```
+
+**Nota:** Solo incluye assignments de eventos donde ya se han generado las asignaciones Secret Santa.
+
+#### GET /me/assignments
+Obtiene las asignaciones del usuario actual (endpoint plural para mayor claridad).
+
+**Auth:** Bearer token requerido
+
+**Response (200):** Igual que `/me/assignment` - retorna array de assignments.
 
 #### GET /events/{eventId}/my-info
 Obtiene información específica del participante en un evento.
@@ -1107,12 +1124,37 @@ const generateAssignments = async (eventId) => {
   return response.json();
 };
 
-// Obtener asignación propia
-const getMyAssignment = async () => {
+// Obtener asignaciones propias (ahora retorna array)
+const getMyAssignments = async () => {
   const response = await fetch('/me/assignment', {
     headers: getAuthHeaders()
   });
-  return response.json();
+  const assignments = await response.json();
+
+  if (!response.ok) {
+    throw new Error(assignments.error);
+  }
+
+  return assignments; // Array de assignments
+};
+
+// Ejemplo de uso con el array
+const displayAssignments = async () => {
+  try {
+    const assignments = await getMyAssignments();
+
+    if (assignments.length === 0) {
+      console.log('No tienes asignaciones aún');
+      return;
+    }
+
+    assignments.forEach(assignment => {
+      console.log(`Evento: ${assignment.eventName}`);
+      console.log(`Debes regalarle a: ${assignment.receiverName}`);
+    });
+  } catch (error) {
+    console.error('Error:', error.message);
+  }
 };
 
 // Actualizar evento (CORRECTO)

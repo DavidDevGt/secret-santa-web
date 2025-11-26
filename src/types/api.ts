@@ -134,12 +134,14 @@ export interface GenerateAssignmentsResponse {
   message: string;
 }
 
-export interface MyAssignmentResponse {
+export interface MyAssignment {
   eventId: string;
   eventName: string;
   receiverName: string;
   receiverEmail: string;
 }
+
+export type MyAssignmentResponse = MyAssignment[];
 
 export interface MyInfoResponse {
   event: {

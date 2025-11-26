@@ -495,8 +495,14 @@ const generateAssignments = async () => {
 
 const viewMyAssignment = async () => {
   try {
-    const assignment = await eventStore.fetchMyAssignment();
-    alert(`Your Secret Santa assignment:\n\n🎁 You need to buy a gift for: ${assignment.receiverName}\n📧 Email: ${assignment.receiverEmail}\n\nHappy gifting! 🎄`);
+    const assignments = await eventStore.fetchMyAssignment();
+    const eventAssignment = assignments.find(a => a.eventId === eventId);
+
+    if (eventAssignment) {
+      alert(`Your Secret Santa assignment for ${eventAssignment.eventName}:\n\n🎁 You need to buy a gift for: ${eventAssignment.receiverName}\n📧 Email: ${eventAssignment.receiverEmail}\n\nHappy gifting! 🎄`);
+    } else {
+      alert('No assignment found for this event yet.');
+    }
   } catch (err) {
     alert('Error loading your assignment: ' + (err as Error).message);
   }
