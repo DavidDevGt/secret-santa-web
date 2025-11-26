@@ -27,28 +27,35 @@
             <h4>Create Event</h4>
             <p>Start a new Secret Santa event</p>
           </router-link>
-        </div>
-      </div>
 
-      <!-- Assignments Section -->
-      <div v-if="authStore.hasRole('participant')" class="assignments-section">
-        <h3>My Secret Santa Assignments</h3>
-        <div v-if="loadingAssignments" class="loading-state">
-          <p>Loading your assignments...</p>
-        </div>
-        <div v-else-if="assignments.length === 0" class="empty-state">
-          <p>🎄 No assignments yet! Check back after assignments are generated for your events.</p>
-        </div>
-        <div v-else class="assignments-grid">
+          <!-- Assignment Cards for Participants -->
           <div
+            v-if="authStore.hasRole('participant') && !loadingAssignments && assignments.length > 0"
             v-for="assignment in assignments"
             :key="assignment.eventId"
-            class="assignment-card"
+            class="action-card assignment-card"
             @click="viewAssignment(assignment)"
           >
-            <h4>{{ assignment.eventName }}</h4>
-            <p>Click to see your assignment</p>
-            <small>🎁 Ready to gift!</small>
+            <h4>🎁 {{ assignment.eventName }}</h4>
+            <p>View your Secret Santa assignment</p>
+          </div>
+
+          <!-- Loading Assignment Card -->
+          <div
+            v-if="authStore.hasRole('participant') && loadingAssignments"
+            class="action-card loading-assignment"
+          >
+            <h4>Loading...</h4>
+            <p>Fetching your assignments</p>
+          </div>
+
+          <!-- Empty Assignment Card -->
+          <div
+            v-if="authStore.hasRole('participant') && !loadingAssignments && assignments.length === 0"
+            class="action-card empty-assignment"
+          >
+            <h4>No Assignments Yet</h4>
+            <p>Check back after assignments are generated</p>
           </div>
         </div>
       </div>
@@ -186,6 +193,13 @@ const viewAssignment = (assignment: MyAssignment) => {
   gap: var(--space-lg);
 }
 
+/* Responsive: 1 column on mobile */
+@media (max-width: 768px) {
+  .actions-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
 .action-card {
   display: block;
   background: var(--color-white);
@@ -250,13 +264,17 @@ const viewAssignment = (assignment: MyAssignment) => {
   box-shadow: 0 8px 25px -8px rgba(15, 23, 42, 0.3);
 }
 
+/* Assignment Cards - Match action-card styling */
 .assignment-card {
-  background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%);
   cursor: pointer;
+  background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+  border-color: #10b981;
 }
 
 .assignment-card:hover {
-  box-shadow: 0 8px 25px -8px rgba(59, 130, 246, 0.3);
+  box-shadow: var(--shadow-lg);
+  border-color: #059669;
+  transform: translateY(-2px);
 }
 
 .assignment-card h4,
@@ -266,97 +284,24 @@ const viewAssignment = (assignment: MyAssignment) => {
   z-index: 1;
 }
 
-/* Assignments Section */
-.assignments-section {
-  background: var(--color-white);
-  padding: var(--space-xl);
-  border-radius: var(--radius-lg);
-  box-shadow: var(--shadow-md);
-  border: 1px solid var(--color-gray-200);
+/* Loading and Empty Assignment States */
+.loading-assignment,
+.empty-assignment {
+  opacity: 0.7;
+  pointer-events: none;
 }
 
-.assignments-section h3 {
-  font-size: var(--font-size-lg);
-  font-weight: 600;
-  color: var(--color-gray-700);
-  margin: 0 0 var(--space-lg) 0;
-}
-
-.assignments-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-  gap: var(--space-lg);
-}
-
-.assignments-grid .assignment-card {
-  background: linear-gradient(135deg, #10b981 0%, #059669 100%);
-  cursor: pointer;
-  transition: all 0.2s ease;
-  border: none;
-  min-height: 120px;
-  display: flex;
-  flex-direction: column;
-  justify-content: center;
-}
-
-.assignments-grid .assignment-card:hover {
-  box-shadow: 0 8px 25px -8px rgba(16, 185, 129, 0.3);
-  transform: translateY(-2px);
-}
-
-.assignments-grid .assignment-card h4 {
-  font-size: var(--font-size-base);
-  font-weight: 600;
-  color: var(--color-white);
-  margin: 0 0 var(--space-sm) 0;
-  position: relative;
-  z-index: 1;
-}
-
-.assignments-grid .assignment-card p {
-  color: var(--color-white);
-  margin: 0 0 var(--space-sm) 0;
-  font-size: var(--font-size-sm);
-  position: relative;
-  z-index: 1;
-  opacity: 0.9;
-}
-
-.assignments-grid .assignment-card small {
-  color: var(--color-white);
-  font-size: var(--font-size-xs);
-  position: relative;
-  z-index: 1;
-  opacity: 0.8;
-}
-
-/* Loading and Empty States */
-.loading-state,
-.empty-state {
-  text-align: center;
-  padding: var(--space-xl);
-  color: var(--color-gray-600);
-}
-
-.loading-state p {
-  margin: 0;
+.loading-assignment h4 {
   font-style: italic;
 }
 
-.empty-state p {
-  margin: 0;
-  font-size: var(--font-size-base);
-  line-height: 1.6;
+.empty-assignment {
+  background: var(--color-gray-50);
+  border-color: var(--color-gray-300);
 }
 
-/* Responsive adjustments */
-@media (max-width: 768px) {
-  .assignments-grid {
-    grid-template-columns: 1fr;
-  }
-
-  .assignments-section {
-    padding: var(--space-lg);
-  }
+.empty-assignment h4,
+.empty-assignment p {
+  color: var(--color-gray-500);
 }
 </style>

@@ -285,7 +285,7 @@ const resetForm = () => {
 .support-options {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-  gap: var(--space-lg);
+  gap: var(--space-xl);
 }
 
 .option-card {
@@ -339,6 +339,7 @@ const resetForm = () => {
   padding: var(--space-2xl);
   box-shadow: var(--shadow-md);
   border: 1px solid var(--color-gray-200);
+  margin-top: var(--space-xl);
 }
 
 .contact-form-section h2 {
@@ -437,6 +438,7 @@ const resetForm = () => {
   padding: var(--space-2xl);
   box-shadow: var(--shadow-md);
   border: 1px solid var(--color-gray-200);
+  margin-top: var(--space-xl);
 }
 
 .faq-section h2 {

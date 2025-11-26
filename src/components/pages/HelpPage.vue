@@ -7,14 +7,8 @@
     <!-- Search -->
     <div class="search-section">
       <div class="search-container">
-        <input
-          v-model="searchQuery"
-          type="text"
-          placeholder="Buscar en la ayuda..."
-          class="search-input"
-          @input="filterContent"
-        />
-        <div class="search-icon">🔍</div>
+        <input v-model="searchQuery" type="text" placeholder="Buscar en la ayuda..." class="search-input"
+          @input="filterContent" />
       </div>
     </div>
 
@@ -49,7 +43,8 @@
 
         <div class="faq-item">
           <h3>¿Qué es Secret Santa?</h3>
-          <p>Secret Santa es un intercambio de regalos donde cada participante es asignado aleatoriamente para comprar un regalo para otra persona del grupo. ¡Es una forma divertida de celebrar las fiestas!</p>
+          <p>Secret Santa es un intercambio de regalos donde cada participante es asignado aleatoriamente para comprar
+            un regalo para otra persona del grupo. ¡Es una forma divertida de celebrar las fiestas!</p>
         </div>
 
         <div class="faq-item">
@@ -66,7 +61,8 @@
 
         <div class="faq-item">
           <h3>¿Cuántos participantes necesito?</h3>
-          <p>Puedes crear eventos con tan solo 2 participantes, pero recomendamos al menos 3 para una experiencia óptima.</p>
+          <p>Puedes crear eventos con tan solo 2 participantes, pero recomendamos al menos 3 para una experiencia
+            óptima.</p>
         </div>
       </section>
 
@@ -76,7 +72,8 @@
 
         <div class="faq-item">
           <h3>¿Cómo invitar participantes?</h3>
-          <p>Después de crear un evento, ve a los detalles del evento y haz clic en "Add Participant". Ingresa su nombre y email. Recibirán una invitación automática por email.</p>
+          <p>Después de crear un evento, ve a los detalles del evento y haz clic en "Add Participant". Ingresa su nombre
+            y email. Recibirán una invitación automática por email.</p>
         </div>
 
         <div class="faq-item">
@@ -84,19 +81,22 @@
           <p>Las reglas te permiten controlar cómo se hacen las asignaciones:</p>
           <ul>
             <li><strong>Evitar mismo grupo:</strong> Asegura que personas del mismo grupo no se asignen entre sí</li>
-            <li><strong>Máximo intentos:</strong> Controla cuántos intentos hace el algoritmo para encontrar asignaciones justas</li>
+            <li><strong>Máximo intentos:</strong> Controla cuántos intentos hace el algoritmo para encontrar
+              asignaciones justas</li>
             <li><strong>Evitar asignaciones previas:</strong> Evita repetir asignaciones de años anteriores</li>
           </ul>
         </div>
 
         <div class="faq-item">
           <h3>¿Cuándo generar las asignaciones?</h3>
-          <p>Genera las asignaciones cuando todos los participantes hayan confirmado su asistencia. Una vez generadas, se envían emails automáticos con las asignaciones secretas.</p>
+          <p>Genera las asignaciones cuando todos los participantes hayan confirmado su asistencia. Una vez generadas,
+            se envían emails automáticos con las asignaciones secretas.</p>
         </div>
 
         <div class="faq-item">
           <h3>¿Puedo modificar un evento después de generar asignaciones?</h3>
-          <p>No recomendamos modificar eventos con asignaciones activas, ya que podría comprometer el secreto. Si necesitas cambios, considera crear un nuevo evento.</p>
+          <p>No recomendamos modificar eventos con asignaciones activas, ya que podría comprometer el secreto. Si
+            necesitas cambios, considera crear un nuevo evento.</p>
         </div>
       </section>
 
@@ -134,56 +134,6 @@
             <p><strong>Si el problema persiste:</strong> Contacta soporte con los detalles del evento.</p>
           </div>
         </div>
-
-      </section>
-
-      <!-- Account & Settings -->
-      <section id="account-settings" class="help-section">
-        <h2>⚙️ Cuenta y Configuración</h2>
-
-        <div class="faq-item">
-          <h3>¿Cómo cambiar mi información de perfil?</h3>
-          <p>Ve a Settings desde el menú superior. Allí puedes actualizar tu nombre y dirección de email. Los cambios se guardan automáticamente.</p>
-        </div>
-
-        <div class="faq-item">
-          <h3>¿Cómo configurar mis preferencias?</h3>
-          <p>En la página de Settings encontrarás opciones para:</p>
-          <ul>
-            <li>Recibir notificaciones por email</li>
-            <li>Recordatorios de fechas límite</li>
-            <li>Permitir invitaciones de otros organizadores</li>
-          </ul>
-        </div>
-      </section>
-
-      <!-- Roles & Permissions -->
-      <section id="roles-permissions" class="help-section">
-        <h2>🔐 Roles y Permisos</h2>
-
-        <div class="roles-grid">
-          <div class="role-card">
-            <h3>👤 Participante</h3>
-            <p>Usuario básico que participa en eventos</p>
-            <ul>
-              <li>Ver eventos donde participa</li>
-              <li>Ver su propia asignación</li>
-              <li>Actualizar perfil personal</li>
-            </ul>
-          </div>
-
-          <div class="role-card">
-            <h3>🎅 Organizador</h3>
-            <p>Crea y gestiona sus propios eventos</p>
-            <ul>
-              <li>Todo lo de Participante</li>
-              <li>Crear eventos</li>
-              <li>Gestionar participantes</li>
-              <li>Generar asignaciones</li>
-              <li>Configurar reglas</li>
-            </ul>
-          </div>
-        </div>
       </section>
     </div>
 
@@ -195,23 +145,13 @@
         <form @submit.prevent="submitSupportRequest" class="support-form">
           <div class="form-group">
             <label for="contact-subject">Asunto</label>
-            <input
-              id="contact-subject"
-              v-model="contactForm.subject"
-              type="text"
-              required
-              placeholder="Breve descripción del problema"
-            />
+            <input id="contact-subject" v-model="contactForm.subject" type="text" required
+              placeholder="Breve descripción del problema" />
           </div>
           <div class="form-group">
             <label for="contact-message">Mensaje</label>
-            <textarea
-              id="contact-message"
-              v-model="contactForm.message"
-              required
-              rows="5"
-              placeholder="Describe tu problema o pregunta en detalle"
-            ></textarea>
+            <textarea id="contact-message" v-model="contactForm.message" required rows="5"
+              placeholder="Describe tu problema o pregunta en detalle"></textarea>
           </div>
           <div class="form-actions">
             <Button type="submit" :loading="submitting" variant="primary">
@@ -249,13 +189,13 @@ const filterContent = () => {
   const sections = document.querySelectorAll('.help-section');
 
   sections.forEach(section => {
-    const content = section.textContent?.toLowerCase() || '';
+    const sectionTitle = section.querySelector('h2')?.textContent?.toLowerCase() || '';
     const faqItems = section.querySelectorAll('.faq-item');
 
     let hasVisibleContent = false;
     faqItems.forEach(item => {
       const itemContent = item.textContent?.toLowerCase() || '';
-      if (itemContent.includes(query) || query === '') {
+      if (itemContent.includes(query) || sectionTitle.includes(query) || query === '') {
         (item as HTMLElement).style.display = 'block';
         hasVisibleContent = true;
       } else {
@@ -263,7 +203,7 @@ const filterContent = () => {
       }
     });
 
-    (section as HTMLElement).style.display = hasVisibleContent || query === '' ? 'block' : 'none';
+    (section as HTMLElement).style.display = hasVisibleContent ? 'block' : 'none';
   });
 };
 
@@ -336,36 +276,39 @@ onMounted(() => {
 
 .search-section {
   margin-bottom: var(--space-2xl);
+  padding: var(--space-xl);
+  background: linear-gradient(135deg, var(--color-gray-50) 0%, var(--color-white) 100%);
+  border-radius: var(--radius-xl);
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
 }
 
 .search-container {
   position: relative;
-  max-width: 500px;
+  max-width: 600px;
   margin: 0 auto;
 }
 
 .search-input {
   width: 100%;
-  padding: var(--space-lg) var(--space-2xl) var(--space-lg) var(--space-4xl);
+  padding: var(--space-lg) var(--space-2xl);
   border: 2px solid var(--color-gray-200);
-  border-radius: var(--radius-lg);
+  border-radius: 50px;
   font-size: var(--font-size-base);
-  transition: border-color 0.2s ease;
+  background: var(--color-white);
+  transition: all 0.3s ease;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
 }
 
 .search-input:focus {
   outline: none;
   border-color: var(--color-accent);
-  box-shadow: 0 0 0 3px rgba(245, 158, 11, 0.1);
+  box-shadow: 0 0 0 4px rgba(245, 158, 11, 0.15), 0 4px 8px rgba(0, 0, 0, 0.1);
+  transform: translateY(-1px);
 }
 
-.search-icon {
-  position: absolute;
-  left: var(--space-lg);
-  top: 50%;
-  transform: translateY(-50%);
-  font-size: var(--font-size-lg);
+.search-input::placeholder {
   color: var(--color-gray-400);
+  font-style: italic;
 }
 
 .quick-actions {
@@ -384,6 +327,11 @@ onMounted(() => {
   cursor: pointer;
   transition: all 0.2s ease;
   text-align: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 140px;
 }
 
 .action-card:hover {
@@ -489,7 +437,7 @@ onMounted(() => {
   margin: 0 0 var(--space-sm) 0;
 }
 
-.role-card > p {
+.role-card>p {
   color: var(--color-gray-600);
   margin: 0 0 var(--space-md) 0;
   font-size: var(--font-size-sm);

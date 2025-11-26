@@ -61,7 +61,7 @@
         <!-- Mobile Menu Button -->
         <button
           class="mobile-menu-btn"
-          @click="toggleMobileMenu"
+          @click.stop="toggleMobileMenu"
           :class="{ active: mobileMenuOpen }"
         >
           <span class="hamburger-line"></span>
@@ -332,7 +332,7 @@ const getInitials = (name: string): string => {
   background: none;
   border: none;
   cursor: pointer;
-  padding: var(--space-sm);
+  padding: var(--space-md);
   border-radius: var(--radius-md);
   transition: all 0.3s ease;
 }
