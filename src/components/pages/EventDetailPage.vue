@@ -128,8 +128,8 @@
           >
             <div class="participant-info">
               <h4>{{ participant.name }}</h4>
-              <p>{{ participant.email }}</p>
-              <p v-if="participant.phone" class="phone">{{ participant.phone }}</p>
+              <p v-if="authStore.hasRole('organizer') || authStore.hasRole('admin')">{{ participant.email }}</p>
+              <p v-if="(authStore.hasRole('organizer') || authStore.hasRole('admin')) && participant.phone" class="phone">{{ participant.phone }}</p>
               <p v-if="participant.group_id" class="group">Group: {{ participant.group_id }}</p>
             </div>
             <div v-if="event.canManageParticipants && !event.hasAssignments" class="participant-actions">
@@ -312,6 +312,8 @@
         </div>
       </div>
     </div>
+
+    <ChristmasGiftModal :message="modalMessage" :isVisible="showModal" @close="closeModal" />
   </div>
 </template>
 
@@ -321,6 +323,7 @@ import { useRoute, useRouter } from 'vue-router';
 import { useEventStore } from '@/stores/events';
 import { useAuthStore } from '@/stores/auth';
 import Button from '@/components/ui/Button.vue';
+import ChristmasGiftModal from '@/components/ui/ChristmasGiftModal.vue';
 import type { Event } from '@/types/domain';
 import type { Participant as ApiParticipant } from '@/types/api';
 
@@ -363,6 +366,8 @@ const updatingEvent = ref(false);
 const generating = ref(false);
 const assignmentMessage = ref('');
 const isErrorMessage = ref(false);
+const showModal = ref(false);
+const modalMessage = ref('');
 
 const eventId = route.params.id as string;
 
@@ -499,13 +504,19 @@ const viewMyAssignment = async () => {
     const eventAssignment = assignments.find(a => a.eventId === eventId);
 
     if (eventAssignment) {
-      alert(`Your Secret Santa assignment for ${eventAssignment.eventName}:\n\n🎁 You need to buy a gift for: ${eventAssignment.receiverName}\n📧 Email: ${eventAssignment.receiverEmail}\n\nHappy gifting! 🎄`);
+      modalMessage.value = `<strong>${eventAssignment.eventName}</strong> <br><br>🎁 You need to buy a gift for: ${eventAssignment.receiverName}<br><br>Happy gifting! 🎅`;
     } else {
-      alert('No assignment found for this event yet.');
+      modalMessage.value = 'No assignment found for this event yet.';
     }
+    showModal.value = true;
   } catch (err) {
-    alert('Error loading your assignment: ' + (err as Error).message);
+    modalMessage.value = 'Error loading your assignment: ' + (err as Error).message;
+    showModal.value = true;
   }
+};
+
+const closeModal = () => {
+  showModal.value = false;
 };
 
 const formatDate = (dateString: string) => {

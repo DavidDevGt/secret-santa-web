@@ -60,6 +60,8 @@
         </div>
       </div>
     </div>
+
+    <ChristmasGiftModal :message="modalMessage" :isVisible="showModal" @close="closeModal" />
   </div>
 </template>
 
@@ -68,11 +70,14 @@ import { ref, onMounted } from 'vue';
 import { useAuthStore } from '@/stores/auth';
 import { useEventStore } from '@/stores/events';
 import type { MyAssignment } from '@/types/api';
+import ChristmasGiftModal from '@/components/ui/ChristmasGiftModal.vue';
 
 const authStore = useAuthStore();
 const eventStore = useEventStore();
 const assignments = ref<MyAssignment[]>([]);
 const loadingAssignments = ref(false);
+const showModal = ref(false);
+const modalMessage = ref('');
 
 // Ensure events are loaded when dashboard mounts
 onMounted(async () => {
@@ -112,7 +117,12 @@ const loadAssignments = async () => {
 };
 
 const viewAssignment = (assignment: MyAssignment) => {
-  alert(`🎄 ${assignment.eventName}\n\n🎁 You need to buy a gift for: ${assignment.receiverName}\n📧 Email: ${assignment.receiverEmail}\n\nHappy gifting! 🎅`);
+  modalMessage.value = `<strong>${assignment.eventName}</strong> <br><br>🎁 You need to buy a gift for: ${assignment.receiverName}<br><br>Happy gifting! 🎅`;
+  showModal.value = true;
+};
+
+const closeModal = () => {
+  showModal.value = false;
 };
 </script>
 

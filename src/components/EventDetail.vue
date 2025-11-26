@@ -42,8 +42,9 @@
         <ul class="participants-list">
           <li v-for="participant in event.participants" :key="participant.id" class="participant-item">
             <div class="participant-info">
-              <strong>{{ participant.name }}</strong> - {{ participant.email }}
-              <span v-if="participant.phone"> ({{ participant.phone }})</span>
+              <strong>{{ participant.name }}</strong>
+              <span v-if="authStore.hasRole('organizer') || authStore.hasRole('admin')"> - {{ participant.email }}</span>
+              <span v-if="(authStore.hasRole('organizer') || authStore.hasRole('admin')) && participant.phone"> ({{ participant.phone }})</span>
             </div>
             <button @click="removeParticipant(participant.id)" class="remove-btn">Remove</button>
           </li>
@@ -71,6 +72,8 @@
       </div>
     </div>
 
+    <ChristmasGiftModal :message="modalMessage" :isVisible="showModal" @close="closeModal" />
+
     <p v-if="error" class="error">{{ error }}</p>
   </div>
 </template>
@@ -78,6 +81,8 @@
 <script setup lang="ts">
 import { ref, onMounted } from 'vue';
 import { useEventStore } from '@/stores/event';
+import { useAuthStore } from '@/stores/auth';
+import ChristmasGiftModal from '@/components/ui/ChristmasGiftModal.vue';
 import type { Event } from '@/types/api';
 
 interface Props {
@@ -87,6 +92,7 @@ interface Props {
 const props = defineProps<Props>();
 
 const eventStore = useEventStore();
+const authStore = useAuthStore();
 
 const event = ref<Event | null>(null);
 const loading = ref(false);
@@ -96,6 +102,8 @@ const newParticipant = ref({ name: '', email: '', phone: '' });
 const addingParticipant = ref(false);
 const generating = ref(false);
 const assignmentMessage = ref('');
+const showModal = ref(false);
+const modalMessage = ref('');
 
 const loadEvent = async () => {
   loading.value = true;
@@ -156,13 +164,19 @@ const viewMyAssignment = async () => {
     const eventAssignment = assignments.find(a => a.eventId === props.eventId);
 
     if (eventAssignment) {
-      alert(`Your assignment for ${eventAssignment.eventName}:\n\n🎁 You need to buy a gift for: ${eventAssignment.receiverName}\n📧 Email: ${eventAssignment.receiverEmail}\n\nHappy gifting! 🎄`);
+      modalMessage.value = `<strong>${eventAssignment.eventName}</strong> <br><br>🎁 You need to buy a gift for: ${eventAssignment.receiverName}<br><br>Happy gifting! 🎅`;
     } else {
-      alert('No assignment found for this event yet.');
+      modalMessage.value = 'No assignment found for this event yet.';
     }
+    showModal.value = true;
   } catch (err) {
-    error.value = (err as Error).message;
+    modalMessage.value = 'Error loading your assignment: ' + (err as Error).message;
+    showModal.value = true;
   }
+};
+
+const closeModal = () => {
+  showModal.value = false;
 };
 
 onMounted(() => {
