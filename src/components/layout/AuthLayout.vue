@@ -61,4 +61,15 @@
 .auth-content {
   padding: var(--space-2xl);
 }
+
+/* Responsive for laptops */
+@media (max-width: 1440px) {
+  .auth-layout {
+    padding: var(--space-lg);
+  }
+
+  .auth-content {
+    padding: var(--space-xl);
+  }
+}
 </style>

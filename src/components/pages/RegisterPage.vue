@@ -1,5 +1,5 @@
 <template>
-  <div class="register-page">
+  <div class="auth-form-wrapper register-page">
     <div class="register-container">
       <h2>{{ showOtp ? 'Verify Your Email' : 'Create Account' }}</h2>
 
@@ -418,6 +418,26 @@ onMounted(() => {
 }
 
 /* Responsive */
+@media (max-width: 1440px) {
+  .register-page h2 {
+    font-size: var(--font-size-xl);
+  }
+
+  .form-group input {
+    padding: var(--space-sm);
+    font-size: var(--font-size-sm);
+  }
+
+  .register-form,
+  .otp-form {
+    gap: var(--space-md);
+  }
+
+  .auth-links p {
+    font-size: var(--font-size-xs);
+  }
+}
+
 @media (max-width: 480px) {
   .register-container {
     padding: 0 var(--space-md);

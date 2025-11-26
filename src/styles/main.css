@@ -163,6 +163,13 @@ input:focus, textarea:focus, select:focus {
 .bg-secondary { background-color: var(--color-secondary); }
 .bg-accent { background-color: var(--color-accent); }
 
+/* Auth form wrapper */
+.auth-form-wrapper {
+  width: 100%;
+  max-width: 400px;
+  margin: 0 auto;
+}
+
 /* Christmas utility classes */
 .bg-snow { background-color: var(--color-christmas-snow); }
 .bg-forest { background-color: var(--color-christmas-green); }
@@ -222,12 +229,41 @@ input:focus, textarea:focus, select:focus {
 }
 
 /* Responsive utilities */
-@media (max-width: 768px) {
+@media (max-width: 1440px) {
+  .auth-form-wrapper {
+    width: 90%;
+    max-width: 400px;
+    padding: 30px;
+  }
+}
+
+@media (max-width: 1366px) {
+  body {
+    font-size: 0.9rem;
+  }
   .container {
     padding: 0 var(--space-sm);
   }
+  #app::before {
+    background-size: 200px 200px, 300px 300px, 150px 150px;
+  }
+}
 
+@media (max-width: 1024px) {
   h1 { font-size: var(--font-size-2xl); }
   h2 { font-size: var(--font-size-xl); }
   h3 { font-size: var(--font-size-lg); }
+}
+
+@media (max-width: 768px) {
+  body {
+    font-size: 0.8rem;
+  }
+  .container {
+    padding: 0 var(--space-xs);
+  }
+
+  h1 { font-size: var(--font-size-xl); }
+  h2 { font-size: var(--font-size-lg); }
+  h3 { font-size: var(--font-size-base); }
 }

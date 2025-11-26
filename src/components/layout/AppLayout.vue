@@ -410,6 +410,24 @@ const getInitials = (name: string): string => {
 }
 
 /* Responsive Design */
+@media (max-width: 1440px) {
+  .header-content {
+    padding: 0 var(--space-md);
+  }
+
+  .app-main {
+    padding: var(--space-xl) var(--space-md);
+  }
+
+  .right-section {
+    gap: var(--space-lg);
+  }
+
+  .user-section {
+    gap: var(--space-md);
+  }
+}
+
 @media (max-width: 768px) {
   .header-content {
     padding: 0 var(--space-md);

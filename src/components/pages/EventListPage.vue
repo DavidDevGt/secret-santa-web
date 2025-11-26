@@ -35,14 +35,6 @@
       <p v-else>
         You haven't been invited to any events yet. Ask an organizer to invite you!
       </p>
-      <Button
-        v-if="authStore.hasRole('organizer') || authStore.hasRole('admin')"
-        @click="goToCreate"
-        variant="primary"
-        size="lg"
-      >
-        Create Event
-      </Button>
     </div>
 
     <!-- Events Grid -->

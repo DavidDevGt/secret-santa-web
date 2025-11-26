@@ -4,7 +4,6 @@ import { useAuthStore } from './stores/auth';
 import { useEventStore } from '@/stores/events';
 import { authService } from '@/services/api/auth';
 import ErrorBoundary from '@/components/ui/ErrorBoundary.vue';
-import '@/styles/main.css';
 
 const authStore = useAuthStore();
 const eventStore = useEventStore();

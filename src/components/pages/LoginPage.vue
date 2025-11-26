@@ -1,5 +1,5 @@
 <template>
-  <div class="login-page">
+  <div class="auth-form-wrapper login-page">
     <h2>Sign In</h2>
     <form @submit.prevent="handleSubmit" class="login-form">
       <div class="form-group">
@@ -170,5 +170,25 @@ const handleSubmit = async () => {
   font-size: var(--font-size-sm);
   text-align: center;
   font-weight: 500;
+}
+
+/* Responsive for laptops 1366px to 1440px */
+@media (max-width: 1440px) {
+  .login-page h2 {
+    font-size: var(--font-size-xl);
+  }
+
+  .form-group input {
+    padding: var(--space-sm);
+    font-size: var(--font-size-sm);
+  }
+
+  .login-form {
+    gap: var(--space-md);
+  }
+
+  .auth-links p {
+    font-size: var(--font-size-xs);
+  }
 }
 </style>
