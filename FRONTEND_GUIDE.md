@@ -36,10 +36,22 @@ const headers = {
 ### Validación de Token al Cargar la App
 Para validar la sesión al refrescar la página, usa **GET /auth/verify-token** en lugar de **GET /events** para una validación más rápida y ligera que no requiere consultas a la base de datos.
 
+### Rate Limiting
+- **OTP Verification**: Máximo 5 intentos por IP cada 15 minutos
+- **Otras operaciones**: No tienen límites específicos, pero se recomienda implementar throttling en el frontend
+
 ### Token JWT
 - Expira en 24 horas
 - Incluir en header `Authorization: Bearer <token>`
 - Contiene: `{ userId, role }`
+
+### Importancia del Rol en el Frontend
+El rol del usuario determina qué funcionalidades mostrar en la UI:
+- **participant**: Mostrar solo eventos donde participa, sin opciones de gestión
+- **organizer**: Mostrar botones de "Crear evento", "Gestionar participantes", etc.
+- **admin**: Mostrar panel administrativo y acceso global
+
+Siempre verifica el rol almacenado localmente o obtenido de `/auth/verify-token` para renderizar la UI apropiada.
 
 ## Endpoints de la API
 
@@ -198,18 +210,42 @@ Obtiene todos los eventos accesibles para el usuario.
 
 **Auth:** Bearer token requerido
 
-**Response (200):**
+**Response (200) - Varía por rol del usuario:**
+- **Admin**: Todos los eventos del sistema con información completa
+- **Organizer**: Eventos propios con información completa
+- **Participant**: Eventos donde participa con información limitada
+
 ```json
+// Respuesta para Admin/Organizer
 [
   {
     "id": "string",
     "owner_id": "string",
     "name": "string",
     "participants": [...],
-    "rules": {...},
-    "assignments": [...],
+    "rules": {
+      "avoidSameGroup": false,
+      "maxShuffleAttempts": 1000,
+      "avoidPreviousAssignments": false
+    },
+    "assignments": [
+      {"giverId": "user1", "receiverId": "user2"}
+    ],
     "createdAt": "string",
     "assignedAt": "string"
+  }
+]
+
+// Respuesta para Participant (filtrada)
+[
+  {
+    "id": "string",
+    "owner_id": "string",
+    "name": "string",
+    "participants": [...],
+    "createdAt": "string",
+    "assignedAt": "string"
+    // Sin rules ni assignments por privacidad
   }
 ]
 ```
@@ -246,17 +282,38 @@ Obtiene detalles de un evento específico.
 **Parameters:**
 - `id`: UUID del evento
 
-**Response (200):**
+**Response (200) - Varía por rol del usuario:**
+- **Admin/Organizer**: Información completa del evento
+- **Participant**: Información limitada (sin reglas ni asignaciones)
+
 ```json
+// Respuesta para Admin/Organizer
 {
   "id": "string",
   "owner_id": "string",
   "name": "string",
   "participants": [...],
-  "rules": {...},
-  "assignments": [...],
+  "rules": {
+    "avoidSameGroup": false,
+    "maxShuffleAttempts": 1000,
+    "avoidPreviousAssignments": false
+  },
+  "assignments": [
+    {"giverId": "user1", "receiverId": "user2"}
+  ],
   "createdAt": "string",
   "assignedAt": "string"
+}
+
+// Respuesta para Participant (filtrada)
+{
+  "id": "string",
+  "owner_id": "string",
+  "name": "string",
+  "participants": [...],
+  "createdAt": "string",
+  "assignedAt": "string"
+  // Sin rules ni assignments por privacidad
 }
 ```
 
@@ -358,7 +415,7 @@ Agrega un participante a un evento.
   "name": "string (1-255 chars)",
   "email": "string (email válido)",
   "phone": "string (opcional, max 50 chars)",
-  "groupId": "string (UUID opcional)"
+  "groupId": "string (1-255 chars, opcional - cualquier string, se convierte a UUID internamente)"
 }
 ```
 
@@ -371,6 +428,13 @@ Agrega un participante a un evento.
   "email": "string",
   "phone": "string",
   "group_id": "string"
+}
+```
+
+**Response (409 - Conflict):**
+```json
+{
+  "error": "A participant with this email already exists in this event"
 }
 ```
 
@@ -389,7 +453,7 @@ Actualiza un participante.
   "name": "string (1-255 chars)",
   "email": "string (email válido)",
   "phone": "string (opcional)",
-  "groupId": "string (UUID opcional)"
+  "groupId": "string (1-255 chars, opcional - cualquier string, se convierte a UUID internamente)"
 }
 ```
 
@@ -669,7 +733,7 @@ interface User {
 - **completeVerificationSchema**: token (UUID), password (8-255)
 - **createEventSchema**: name (1-255)
 - **updateEventSchema**: name (1-255)
-- **createParticipantSchema**: name (1-255), email (válido), phone (opcional, max 50), groupId (opcional, UUID)
+- **createParticipantSchema**: name (1-255), email (válido), phone (opcional, max 50), groupId (opcional, 1-255 chars - cualquier string)
 - **updateParticipantSchema**: igual que createParticipantSchema
 - **rulesSchema**: avoidSameGroup (boolean opcional), maxShuffleAttempts (1-10000 opcional), avoidPreviousAssignments (boolean opcional)
 - **uuidParamSchema**: string UUID válido
@@ -722,6 +786,56 @@ Los errores de validación retornan:
 - **requireAdmin**: Requiere rol admin
 - **requireEventAccess**: Verifica propiedad del evento o rol admin
 - **otpRateLimit**: Limita intentos de verificación OTP (5 por 15 min)
+
+## Respuestas Filtradas por Rol
+
+La API implementa **filtrado inteligente de respuestas** basado en el rol del usuario para garantizar privacidad y seguridad. Los participantes no ven información sensible como reglas de matching o asignaciones completas.
+
+### Participantes
+- **Eventos**: Solo ven eventos donde fueron invitados
+- **Detalles de evento**: Sin reglas ni asignaciones
+- **Asignaciones**: Solo pueden ver su propia asignación personal (`/me/assignment`)
+- **Gestión**: No pueden crear eventos ni modificar participantes
+
+### Organizadores
+- **Eventos**: Pueden ver y gestionar sus eventos propios
+- **Información completa**: Acceso a reglas, asignaciones y configuración
+- **Gestión**: Pueden invitar participantes y generar asignaciones
+
+### Administradores
+- **Acceso global**: Ven todos los eventos y usuarios del sistema
+- **Dashboard**: Estadísticas administrativas completas
+- **Auditoría**: Control total del sistema
+
+### Ejemplos de Filtrado
+
+```javascript
+// Participante ve evento limitado
+{
+  "id": "event-123",
+  "name": "Navidad 2024",
+  "participants": [...],
+  "createdAt": "2024-12-01T...",
+  "assignedAt": "2024-12-15T..."
+  // Sin rules, sin assignments
+}
+
+// Organizador/Admin ve evento completo
+{
+  "id": "event-123",
+  "name": "Navidad 2024",
+  "participants": [...],
+  "rules": {
+    "avoidSameGroup": true,
+    "maxShuffleAttempts": 1000
+  },
+  "assignments": [
+    {"giverId": "user1", "receiverId": "user2"}
+  ],
+  "createdAt": "2024-12-01T...",
+  "assignedAt": "2024-12-15T..."
+}
+```
 
 ## Emails y Notificaciones
 
@@ -1034,17 +1148,44 @@ const updateEventWrong = async (eventId, newName) => {
 ### Manejo de Errores Global
 ```javascript
 const handleApiError = (error) => {
-  if (error.message.includes('Invalid or expired token') || error.message.includes('Token expired') || error.message.includes('Invalid token')) {
-    // Redirigir a login
+  // Errores de autenticación - redirigir a login
+  if (error.message.includes('Token expired') ||
+      error.message.includes('Invalid token') ||
+      error.message.includes('Invalid or expired token')) {
     localStorage.removeItem('token');
     window.location.href = '/login';
-  } else if (error.message.includes('Access denied')) {
-    // Mostrar mensaje de permisos
-    alert('No tienes permisos para esta acción');
-  } else {
-    // Error genérico
-    alert('Error: ' + error.message);
+    return;
   }
+
+  // Errores de permisos
+  if (error.message.includes('Access denied') ||
+      error.message.includes('Forbidden')) {
+    alert('No tienes permisos para esta acción');
+    return;
+  }
+
+  // Errores de recursos no encontrados
+  if (error.message.includes('Event not found') ||
+      error.message.includes('Participant not found')) {
+    alert('El recurso solicitado no existe o no tienes acceso');
+    return;
+  }
+
+  // Errores de validación
+  if (error.message.includes('field1:') ||
+      error.message.includes('field2:')) {
+    alert('Datos inválidos: ' + error.message);
+    return;
+  }
+
+  // Errores de rate limiting
+  if (error.message.includes('Too many')) {
+    alert('Demasiadas solicitudes. Inténtalo de nuevo más tarde.');
+    return;
+  }
+
+  // Error genérico
+  alert('Error inesperado: ' + error.message);
 };
 ```
 

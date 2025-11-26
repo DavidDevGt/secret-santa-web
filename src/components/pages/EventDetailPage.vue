@@ -102,7 +102,7 @@
                   v-model="newParticipant.groupId"
                   type="text"
                   :disabled="addingParticipant"
-                  placeholder="Enter group ID (optional)"
+                  placeholder="Enter group name (optional)"
                 />
               </div>
             </div>
@@ -132,7 +132,7 @@
               <p v-if="participant.phone" class="phone">{{ participant.phone }}</p>
               <p v-if="participant.group_id" class="group">Group: {{ participant.group_id }}</p>
             </div>
-            <div v-if="event.canManageParticipants" class="participant-actions">
+            <div v-if="event.canManageParticipants && !event.hasAssignments" class="participant-actions">
               <Button
                 @click="removeParticipant(participant)"
                 variant="danger"
@@ -145,8 +145,8 @@
         </div>
       </section>
 
-      <!-- Rules Section -->
-      <section v-if="event.canManageParticipants" class="section">
+      <!-- Rules Section - Only for organizers and admins -->
+      <section v-if="authStore.hasRole('organizer') || authStore.hasRole('admin')" class="section">
         <div class="section-header">
           <h2>Rules</h2>
           <Button
@@ -225,16 +225,18 @@
         <div class="section-header">
           <h2>Secret Santa Assignments</h2>
           <div class="assignment-actions">
+            <!-- Only organizers/admins can generate assignments -->
             <Button
-              v-if="!event.hasAssignments && event.canGenerateAssignments"
+              v-if="!event.hasAssignments && (authStore.hasRole('organizer') || authStore.hasRole('admin'))"
               @click="generateAssignments"
               variant="primary"
               :loading="generating"
             >
               Generate Assignments
             </Button>
+            <!-- Everyone can view their own assignment once generated -->
             <Button
-              v-else-if="event.hasAssignments"
+              v-if="event.hasAssignments"
               @click="viewMyAssignment"
               variant="accent"
             >
@@ -243,16 +245,27 @@
           </div>
         </div>
 
+        <!-- Different messages based on role and assignment status -->
         <div v-if="!event.hasAssignments" class="no-assignments">
-          <p>Assignments haven't been generated yet. Add at least 2 participants and click "Generate Assignments".</p>
+          <p v-if="authStore.hasRole('organizer') || authStore.hasRole('admin')">
+            Assignments haven't been generated yet. Add at least 2 participants and click "Generate Assignments" to start the Secret Santa fun! 🎄
+          </p>
+          <p v-else>
+            Assignments haven't been generated yet. The organizer will generate them when ready. You'll receive an email notification! 📧
+          </p>
         </div>
 
         <div v-else class="assignments-ready">
-          <p>🎄 Secret Santa assignments have been generated and sent to all participants!</p>
-          <p>Click "View My Assignment" to see who you're buying a gift for.</p>
+          <p>🎄 Secret Santa assignments have been generated!</p>
+          <p v-if="authStore.hasRole('organizer') || authStore.hasRole('admin')">
+            All participants have been notified via email. Click "View My Assignment" to see who you're buying a gift for.
+          </p>
+          <p v-else>
+            Check your email for your assignment! Or click "View My Assignment" to see who you're buying a gift for.
+          </p>
         </div>
 
-        <div v-if="assignmentMessage" class="assignment-message">
+        <div v-if="assignmentMessage" :class="['assignment-message', isErrorMessage ? 'error' : '']">
           {{ assignmentMessage }}
         </div>
       </section>
@@ -349,6 +362,7 @@ const updatingEvent = ref(false);
 // Assignments
 const generating = ref(false);
 const assignmentMessage = ref('');
+const isErrorMessage = ref(false);
 
 const eventId = route.params.id as string;
 
@@ -449,12 +463,31 @@ const generateAssignments = async () => {
 
   generating.value = true;
   assignmentMessage.value = '';
+  isErrorMessage.value = false;
   try {
     const result = await eventStore.generateAssignments(eventId);
     assignmentMessage.value = result.message;
+    isErrorMessage.value = false;
     await loadEvent(); // Reload to update assignment status
   } catch (err) {
-    assignmentMessage.value = (err as Error).message;
+    const errorMessage = (err as Error).message;
+    isErrorMessage.value = true;
+
+    // Provide better error messages for common issues
+    if (errorMessage.includes('ImpossibleAssignmentError') ||
+        errorMessage.includes('No valid assignment could be found')) {
+      assignmentMessage.value =
+        '❌ Cannot generate assignments with current rules and participants.\n\n' +
+        'This usually happens when:\n' +
+        '• Too many participants are in the same group with "Avoid Same Group" enabled\n' +
+        '• Group restrictions make it mathematically impossible to create valid assignments\n\n' +
+        'Solutions:\n' +
+        '• Disable "Avoid Same Group" rule\n' +
+        '• Add more participants outside the restricted groups\n' +
+        '• Reorganize participants into smaller or different groups';
+    } else {
+      assignmentMessage.value = errorMessage;
+    }
   } finally {
     generating.value = false;
   }
@@ -746,11 +779,17 @@ onMounted(() => {
   padding: var(--space-md);
   border-radius: var(--radius-md);
   font-weight: 500;
+  white-space: pre-line;
 }
 
 .assignment-message {
   background-color: rgba(16, 185, 129, 0.1);
   color: var(--color-success);
+}
+
+.assignment-message.error {
+  background-color: rgba(239, 68, 68, 0.1);
+  color: var(--color-error);
 }
 
 /* Modal */

@@ -72,6 +72,46 @@
         </div>
       </div>
 
+      <!-- System Health -->
+      <div class="health-section">
+        <h2>System Health</h2>
+        <div class="health-grid">
+          <div class="health-card">
+            <div class="health-header">
+              <h3>Liveness Check</h3>
+              <div :class="['health-status', healthStatus.liveness ? 'healthy' : 'unhealthy']">
+                {{ healthStatus.liveness ? '✓ Healthy' : '✗ Unhealthy' }}
+              </div>
+            </div>
+            <div class="health-details">
+              <p><strong>Status:</strong> {{ healthStatus.liveness ? 'Server running' : 'Server down' }}</p>
+              <p><strong>Last Check:</strong> {{ formatTimestamp(healthStatus.livenessTimestamp) }}</p>
+            </div>
+          </div>
+
+          <div class="health-card">
+            <div class="health-header">
+              <h3>Readiness Check</h3>
+              <div :class="['health-status', healthStatus.readiness ? 'healthy' : 'unhealthy']">
+                {{ healthStatus.readiness ? '✓ Ready' : '✗ Not Ready' }}
+              </div>
+            </div>
+            <div class="health-details">
+              <p><strong>Status:</strong> {{ healthStatus.readiness ? 'Database connected' : 'Database issues' }}</p>
+              <p><strong>Last Check:</strong> {{ formatTimestamp(healthStatus.readinessTimestamp) }}</p>
+              <p v-if="!healthStatus.readiness && healthStatus.readinessError" class="error-text">
+                <strong>Error:</strong> {{ healthStatus.readinessError }}
+              </p>
+            </div>
+          </div>
+        </div>
+        <div class="health-actions">
+          <Button @click="checkHealth" :loading="checkingHealth" variant="outline">
+            🔄 Refresh Health Status
+          </Button>
+        </div>
+      </div>
+
       <!-- Quick Actions -->
       <div class="actions-section">
         <h2>Quick Actions</h2>
@@ -91,14 +131,6 @@
             class="action-btn"
           >
             🎄 View All Events
-          </Button>
-          <Button
-            @click="systemHealth"
-            variant="outline"
-            size="lg"
-            class="action-btn"
-          >
-            ❤️ System Health
           </Button>
         </div>
       </div>
@@ -120,6 +152,7 @@
 import { ref, onMounted } from 'vue';
 import { useRouter } from 'vue-router';
 import { useAdminStore } from '@/stores/admin/index';
+import { api } from '@/services/api';
 import Button from '@/components/ui/Button.vue';
 import type { AdminDashboardStats } from '@/services/api/admin';
 
@@ -129,6 +162,16 @@ const adminStore = useAdminStore();
 const stats = ref<AdminDashboardStats | null>(null);
 const loading = ref(false);
 const error = ref<string | null>(null);
+
+// Health check state
+const healthStatus = ref({
+  liveness: false,
+  readiness: false,
+  livenessTimestamp: '',
+  readinessTimestamp: '',
+  readinessError: ''
+});
+const checkingHealth = ref(false);
 
 const loadDashboard = async () => {
   loading.value = true;
@@ -152,9 +195,29 @@ const viewAllEvents = () => {
   alert('Events management page - Coming soon!');
 };
 
-const systemHealth = () => {
-  // Could show system health details
-  alert('System health check - All systems operational! 🎄');
+const checkHealth = async () => {
+  checkingHealth.value = true;
+  try {
+    // Check liveness
+    const livenessData = await api.health();
+    healthStatus.value.liveness = livenessData.status === 'ok';
+    healthStatus.value.livenessTimestamp = new Date().toISOString();
+
+    // Check readiness
+    const readinessData = await api.ready();
+    healthStatus.value.readiness = readinessData.status === 'ready';
+    healthStatus.value.readinessTimestamp = new Date().toISOString();
+    healthStatus.value.readinessError = readinessData.error || '';
+  } catch (error) {
+    console.error('Health check failed:', error);
+    healthStatus.value.liveness = false;
+    healthStatus.value.readiness = false;
+    healthStatus.value.livenessTimestamp = new Date().toISOString();
+    healthStatus.value.readinessTimestamp = new Date().toISOString();
+    healthStatus.value.readinessError = 'Network error';
+  } finally {
+    checkingHealth.value = false;
+  }
 };
 
 const formatTimestamp = (timestamp: string) => {
@@ -168,8 +231,9 @@ const formatTimestamp = (timestamp: string) => {
   });
 };
 
-onMounted(() => {
-  loadDashboard();
+onMounted(async () => {
+  await loadDashboard();
+  await checkHealth();
 });
 </script>
 
@@ -291,6 +355,7 @@ onMounted(() => {
   font-weight: 500;
 }
 
+.health-section,
 .actions-section,
 .activity-section {
   background: var(--color-white);
@@ -345,6 +410,72 @@ onMounted(() => {
   font-weight: 600;
 }
 
+.health-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  gap: var(--space-lg);
+  margin-bottom: var(--space-xl);
+}
+
+.health-card {
+  background: var(--color-gray-50);
+  border-radius: var(--radius-md);
+  padding: var(--space-lg);
+  border: 1px solid var(--color-gray-200);
+}
+
+.health-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: var(--space-md);
+}
+
+.health-header h3 {
+  font-size: var(--font-size-lg);
+  font-weight: 600;
+  color: var(--color-primary);
+  margin: 0;
+}
+
+.health-status {
+  padding: var(--space-xs) var(--space-sm);
+  border-radius: var(--radius-md);
+  font-size: var(--font-size-sm);
+  font-weight: 600;
+  text-transform: uppercase;
+}
+
+.health-status.healthy {
+  background: rgba(16, 185, 129, 0.1);
+  color: var(--color-success);
+}
+
+.health-status.unhealthy {
+  background: rgba(239, 68, 68, 0.1);
+  color: var(--color-error);
+}
+
+.health-details p {
+  margin: 0 0 var(--space-sm) 0;
+  font-size: var(--font-size-sm);
+  color: var(--color-gray-600);
+}
+
+.health-details p:last-child {
+  margin-bottom: 0;
+}
+
+.error-text {
+  color: var(--color-error);
+  font-weight: 500;
+}
+
+.health-actions {
+  display: flex;
+  justify-content: center;
+}
+
 /* Responsive */
 @media (max-width: 768px) {
   .stats-grid {
@@ -352,6 +483,10 @@ onMounted(() => {
   }
 
   .actions-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .health-grid {
     grid-template-columns: 1fr;
   }
 

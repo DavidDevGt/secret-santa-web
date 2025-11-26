@@ -62,6 +62,24 @@ const routes: RouteRecordRaw[] = [
           title: 'Admin Dashboard',
           requiresRole: 'admin'
         }
+      },
+      {
+        path: 'settings',
+        name: 'Settings',
+        component: () => import('@/components/pages/SettingsPage.vue'),
+        meta: { title: 'Settings' }
+      },
+      {
+        path: 'help',
+        name: 'Help',
+        component: () => import('@/components/pages/HelpPage.vue'),
+        meta: { title: 'Help Center' }
+      },
+      {
+        path: 'support',
+        name: 'Support',
+        component: () => import('@/components/pages/SupportPage.vue'),
+        meta: { title: 'Support' }
       }
     ]
   },

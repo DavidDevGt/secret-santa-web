@@ -64,7 +64,7 @@ defineEmits<{
 
 <style scoped>
 .login {
-  max-width: 400px;
+  max-width: 600px;
   margin: 0 auto;
 }
 

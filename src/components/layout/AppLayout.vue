@@ -39,14 +39,22 @@
                 <span class="user-role">{{ authStore.user?.role }}</span>
               </div>
             </div>
-            <Button
-              variant="outline"
-              size="sm"
-              @click="handleLogout"
-              class="logout-btn"
-            >
-              Logout
-            </Button>
+            <div class="user-actions">
+                <router-link to="/settings" class="settings-link">
+                  ⚙️ Settings
+                </router-link>
+                <router-link to="/help" class="help-link">
+                  ❓ Help
+                </router-link>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  @click="handleLogout"
+                  class="logout-btn"
+                >
+                  Logout
+                </Button>
+              </div>
           </div>
         </div>
 
@@ -90,14 +98,22 @@
               <span class="user-role">{{ authStore.user?.role }}</span>
             </div>
           </div>
-          <Button
-            variant="outline"
-            size="sm"
-            @click="handleLogout"
-            class="mobile-logout-btn"
-          >
-            Logout
-          </Button>
+          <div class="mobile-user-actions">
+            <router-link to="/settings" class="mobile-settings-link" @click="closeMobileMenu">
+              ⚙️ Settings
+            </router-link>
+            <router-link to="/help" class="mobile-help-link" @click="closeMobileMenu">
+              ❓ Help
+            </router-link>
+            <Button
+              variant="outline"
+              size="sm"
+              @click="handleLogout"
+              class="mobile-logout-btn"
+            >
+              Logout
+            </Button>
+          </div>
         </div>
       </div>
     </header>
@@ -229,6 +245,30 @@ const getInitials = (name: string): string => {
   display: flex;
   align-items: center;
   gap: var(--space-lg);
+}
+
+.user-actions {
+  display: flex;
+  align-items: center;
+  gap: var(--space-md);
+}
+
+.settings-link,
+.help-link {
+  color: var(--color-gray-600);
+  text-decoration: none;
+  font-size: var(--font-size-sm);
+  font-weight: 500;
+  padding: var(--space-sm) var(--space-md);
+  border-radius: var(--radius-md);
+  transition: all 0.2s ease;
+  white-space: nowrap;
+}
+
+.settings-link:hover,
+.help-link:hover {
+  color: var(--color-primary);
+  background: var(--color-gray-50);
 }
 
 .user-info {
@@ -376,6 +416,33 @@ const getInitials = (name: string): string => {
   display: flex;
   align-items: center;
   justify-content: space-between;
+}
+
+.mobile-user-actions {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-md);
+  align-items: stretch;
+}
+
+.mobile-settings-link,
+.mobile-help-link {
+  color: var(--color-gray-600);
+  text-decoration: none;
+  font-size: var(--font-size-sm);
+  font-weight: 500;
+  padding: var(--space-md);
+  border-radius: var(--radius-md);
+  transition: all 0.2s ease;
+  text-align: center;
+  border: 1px solid var(--color-gray-200);
+}
+
+.mobile-settings-link:hover,
+.mobile-help-link:hover {
+  color: var(--color-primary);
+  background: var(--color-gray-50);
+  border-color: var(--color-primary);
 }
 
 .mobile-user-info {

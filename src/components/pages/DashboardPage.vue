@@ -163,8 +163,8 @@ const viewMyAssignment = async () => {
 
 .actions-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
-  gap: var(--space-md);
+  grid-template-columns: repeat(2, 1fr);
+  gap: var(--space-lg);
 }
 
 .action-card {

@@ -26,15 +26,89 @@
       <Button @click="loadEvents" variant="outline">Try Again</Button>
     </div>
 
-    <!-- Empty State -->
+    <!-- Enhanced Empty State -->
     <div v-else-if="!events.length" class="empty-state">
-      <h3>No events yet</h3>
-      <p v-if="authStore.hasRole('organizer') || authStore.hasRole('admin')">
-        Create your first Secret Santa event to get started!
-      </p>
-      <p v-else>
-        You haven't been invited to any events yet. Ask an organizer to invite you!
-      </p>
+      <div class="empty-state-content">
+        <div class="empty-state-icon">
+          🎄
+        </div>
+        <h3>Welcome to Secret Santa!</h3>
+        <p v-if="authStore.hasRole('organizer') || authStore.hasRole('admin')" class="empty-state-description">
+          Create your first Secret Santa event and spread the holiday cheer! 🎁
+        </p>
+        <p v-else class="empty-state-description">
+          You haven't been invited to any Secret Santa events yet. The magic happens when organizers invite you! ✨
+        </p>
+
+        <!-- Call-to-Actions -->
+        <div class="empty-state-actions">
+          <Button
+            v-if="authStore.hasRole('organizer') || authStore.hasRole('admin')"
+            variant="primary"
+            size="lg"
+            @click="goToCreate"
+            class="primary-action"
+          >
+            🎄 Create Your First Event
+          </Button>
+          <Button
+            v-else
+            variant="outline"
+            size="lg"
+            @click="showInviteInfo"
+            class="secondary-action"
+          >
+            📧 How to Get Invited
+          </Button>
+        </div>
+
+        <!-- Quick Tips -->
+        <div class="empty-state-tips">
+          <h4>💡 Quick Tips</h4>
+          <div class="tips-grid">
+            <div class="tip-card">
+              <div class="tip-icon">🎯</div>
+              <div class="tip-content">
+                <h5>Easy Setup</h5>
+                <p>Create events in minutes with our simple interface</p>
+              </div>
+            </div>
+            <div class="tip-card">
+              <div class="tip-icon">🤝</div>
+              <div class="tip-content">
+                <h5>Invite Friends</h5>
+                <p>Send invitations via email - no app downloads needed</p>
+              </div>
+            </div>
+            <div class="tip-card">
+              <div class="tip-icon">🎁</div>
+              <div class="tip-content">
+                <h5>Fair Assignments</h5>
+                <p>Our algorithm ensures everyone gets a gift fairly</p>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Example Event Preview -->
+        <div v-if="authStore.hasRole('organizer') || authStore.hasRole('admin')" class="empty-state-example">
+          <h4>📋 Example Event</h4>
+          <div class="example-card">
+            <div class="example-header">
+              <h5>Office Holiday Party 2024</h5>
+              <span class="example-badge">Draft</span>
+            </div>
+            <div class="example-info">
+              <span>👥 12 Participants</span>
+              <span>📅 Created: Today</span>
+            </div>
+            <div class="example-actions">
+              <Button variant="outline" size="sm" disabled>Add Participants</Button>
+              <Button variant="primary" size="sm" disabled>Generate Assignments</Button>
+            </div>
+          </div>
+        </div>
+      </div>
     </div>
 
     <!-- Events Grid -->
@@ -220,6 +294,10 @@ const goToCreate = () => {
   router.push('/events/create');
 };
 
+const showInviteInfo = () => {
+  alert('To get invited to a Secret Santa event:\n\n1. Ask an organizer or friend to create an event\n2. They will send you an invitation email\n3. Click the invitation link and follow the setup\n4. Start gifting! 🎁\n\nIf you know someone organizing events, reach out to them!');
+};
+
 const viewEvent = (event: Event) => {
   router.push(`/events/${event.id}`);
 };
@@ -335,14 +413,204 @@ onMounted(() => {
   100% { transform: rotate(360deg); }
 }
 
-.empty-state h3 {
-  color: var(--color-gray-700);
-  margin: 0 0 var(--space-sm) 0;
+.empty-state {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 60vh;
 }
 
-.empty-state p {
-  color: var(--color-gray-500);
+.empty-state-content {
+  text-align: center;
+  max-width: 600px;
+  padding: var(--space-2xl);
+}
+
+.empty-state-icon {
+  font-size: var(--font-size-6xl);
+  margin-bottom: var(--space-lg);
+  animation: bounce 2s infinite;
+}
+
+@keyframes bounce {
+  0%, 20%, 50%, 80%, 100% {
+    transform: translateY(0);
+  }
+  40% {
+    transform: translateY(-10px);
+  }
+  60% {
+    transform: translateY(-5px);
+  }
+}
+
+.empty-state h3 {
+  font-size: var(--font-size-2xl);
+  font-weight: 700;
+  color: var(--color-primary);
+  margin: 0 0 var(--space-md) 0;
+}
+
+.empty-state-description {
+  font-size: var(--font-size-lg);
+  color: var(--color-gray-600);
+  margin: 0 0 var(--space-2xl) 0;
+  line-height: 1.6;
+}
+
+.empty-state-actions {
+  display: flex;
+  gap: var(--space-md);
+  justify-content: center;
+  margin-bottom: var(--space-3xl);
+  flex-wrap: wrap;
+}
+
+.primary-action {
+  background: linear-gradient(135deg, var(--color-primary) 0%, var(--color-primary-dark) 100%);
+  border: none;
+  font-weight: 600;
+  padding: var(--space-lg) var(--space-2xl);
+  box-shadow: 0 4px 15px rgba(15, 23, 42, 0.2);
+  transition: all 0.3s ease;
+}
+
+.primary-action:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 25px rgba(15, 23, 42, 0.3);
+}
+
+.secondary-action {
+  border: 2px solid var(--color-accent);
+  color: var(--color-accent);
+  font-weight: 600;
+  padding: var(--space-lg) var(--space-2xl);
+  transition: all 0.3s ease;
+}
+
+.secondary-action:hover {
+  background-color: var(--color-accent);
+  color: white;
+  transform: translateY(-1px);
+}
+
+.empty-state-tips {
+  margin-bottom: var(--space-3xl);
+}
+
+.empty-state-tips h4 {
+  font-size: var(--font-size-lg);
+  font-weight: 600;
+  color: var(--color-gray-700);
   margin: 0 0 var(--space-lg) 0;
+}
+
+.tips-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: var(--space-lg);
+  margin-top: var(--space-lg);
+}
+
+.tip-card {
+  background: var(--color-white);
+  border-radius: var(--radius-lg);
+  padding: var(--space-lg);
+  box-shadow: var(--shadow-sm);
+  border: 1px solid var(--color-gray-200);
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-md);
+  transition: all 0.2s ease;
+}
+
+.tip-card:hover {
+  box-shadow: var(--shadow-md);
+  transform: translateY(-2px);
+}
+
+.tip-icon {
+  font-size: var(--font-size-2xl);
+  flex-shrink: 0;
+}
+
+.tip-content h5 {
+  font-size: var(--font-size-base);
+  font-weight: 600;
+  color: var(--color-primary);
+  margin: 0 0 var(--space-xs) 0;
+}
+
+.tip-content p {
+  font-size: var(--font-size-sm);
+  color: var(--color-gray-600);
+  margin: 0;
+  line-height: 1.5;
+}
+
+.empty-state-example {
+  margin-top: var(--space-3xl);
+}
+
+.empty-state-example h4 {
+  font-size: var(--font-size-lg);
+  font-weight: 600;
+  color: var(--color-gray-700);
+  margin: 0 0 var(--space-lg) 0;
+}
+
+.example-card {
+  background: var(--color-white);
+  border-radius: var(--radius-lg);
+  padding: var(--space-lg);
+  box-shadow: var(--shadow-md);
+  border: 1px solid var(--color-gray-200);
+  text-align: left;
+  max-width: 400px;
+  margin: 0 auto;
+}
+
+.example-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: var(--space-md);
+}
+
+.example-header h5 {
+  font-size: var(--font-size-lg);
+  font-weight: 600;
+  color: var(--color-primary);
+  margin: 0;
+}
+
+.example-badge {
+  background: rgba(245, 158, 11, 0.1);
+  color: var(--color-warning);
+  padding: var(--space-xs) var(--space-sm);
+  border-radius: var(--radius-md);
+  font-size: var(--font-size-xs);
+  font-weight: 600;
+  text-transform: uppercase;
+}
+
+.example-info {
+  display: flex;
+  gap: var(--space-lg);
+  margin-bottom: var(--space-lg);
+  font-size: var(--font-size-sm);
+  color: var(--color-gray-600);
+}
+
+.example-actions {
+  display: flex;
+  gap: var(--space-sm);
+  justify-content: flex-end;
+}
+
+.example-actions button {
+  opacity: 0.6;
+  cursor: not-allowed;
 }
 
 .events-grid {
@@ -571,6 +839,51 @@ onMounted(() => {
   .modal-content {
     margin: var(--space-md);
     max-height: calc(100vh - 2 * var(--space-md));
+  }
+
+  .empty-state-content {
+    padding: var(--space-xl);
+  }
+
+  .empty-state-icon {
+    font-size: var(--font-size-4xl);
+  }
+
+  .empty-state h3 {
+    font-size: var(--font-size-xl);
+  }
+
+  .empty-state-description {
+    font-size: var(--font-size-base);
+  }
+
+  .empty-state-actions {
+    flex-direction: column;
+    align-items: center;
+  }
+
+  .primary-action,
+  .secondary-action {
+    width: 100%;
+    max-width: 300px;
+  }
+
+  .tips-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .tip-card {
+    flex-direction: column;
+    text-align: center;
+  }
+
+  .tip-icon {
+    align-self: center;
+  }
+
+  .example-info {
+    flex-direction: column;
+    gap: var(--space-xs);
   }
 }
 </style>
