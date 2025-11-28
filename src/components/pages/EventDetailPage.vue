@@ -314,11 +314,14 @@
     </div>
 
     <ChristmasGiftModal :message="modalMessage" :isVisible="showModal" @close="closeModal" />
+
+    <!-- Structured Data for SEO -->
+    <script v-if="event" type="application/ld+json" v-html="structuredData"></script>
   </div>
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted } from 'vue';
+import { ref, onMounted, computed } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import { useEventStore } from '@/stores/events';
 import { useAuthStore } from '@/stores/auth';
@@ -370,6 +373,30 @@ const showModal = ref(false);
 const modalMessage = ref('');
 
 const eventId = route.params.id as string;
+
+const structuredData = computed(() => {
+  if (!event.value) return '';
+
+  const attendees = event.value.participants.map(p => ({
+    "@type": "Person",
+    "name": p.name,
+    "email": p.email
+  }));
+
+  return JSON.stringify({
+    "@context": "https://schema.org",
+    "@type": "Event",
+    "name": event.value.name,
+    "description": `Evento de Secret Santa organizado en Secret Santa App con ${event.value.participants.length} participantes.`,
+    "startDate": event.value.createdAt,
+    "organizer": {
+      "@type": "Organization",
+      "name": "Secret Santa App"
+    },
+    "attendee": attendees,
+    "eventStatus": event.value.hasAssignments ? "EventScheduled" : "EventPostponed"
+  });
+});
 
 const loadEvent = async () => {
   loading.value = true;
