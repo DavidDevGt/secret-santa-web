@@ -4,13 +4,6 @@
       <h1>Centro de Ayuda</h1>
     </div>
 
-    <!-- Search -->
-    <div class="search-section">
-      <div class="search-container">
-        <input v-model="searchQuery" type="text" placeholder="Buscar en la ayuda..." class="search-input"
-          @input="filterContent" />
-      </div>
-    </div>
 
     <!-- Quick Actions -->
     <div class="quick-actions">
@@ -174,7 +167,6 @@ import Button from '@/components/ui/Button.vue';
 
 const router = useRouter();
 
-const searchQuery = ref('');
 const showContact = ref(false);
 const submitting = ref(false);
 
@@ -183,29 +175,6 @@ const contactForm = ref({
   message: ''
 });
 
-// Filter content based on search
-const filterContent = () => {
-  const query = searchQuery.value.toLowerCase();
-  const sections = document.querySelectorAll('.help-section');
-
-  sections.forEach(section => {
-    const sectionTitle = section.querySelector('h2')?.textContent?.toLowerCase() || '';
-    const faqItems = section.querySelectorAll('.faq-item');
-
-    let hasVisibleContent = false;
-    faqItems.forEach(item => {
-      const itemContent = item.textContent?.toLowerCase() || '';
-      if (itemContent.includes(query) || sectionTitle.includes(query) || query === '') {
-        (item as HTMLElement).style.display = 'block';
-        hasVisibleContent = true;
-      } else {
-        (item as HTMLElement).style.display = 'none';
-      }
-    });
-
-    (section as HTMLElement).style.display = hasVisibleContent ? 'block' : 'none';
-  });
-};
 
 const scrollToSection = (sectionId: string) => {
   const element = document.getElementById(sectionId);
@@ -244,10 +213,6 @@ const submitSupportRequest = async () => {
   }
 };
 
-onMounted(() => {
-  // Initialize with all content visible
-  filterContent();
-});
 </script>
 
 <style scoped>
@@ -274,42 +239,6 @@ onMounted(() => {
   margin: 0;
 }
 
-.search-section {
-  margin-bottom: var(--space-2xl);
-  padding: var(--space-xl);
-  background: linear-gradient(135deg, var(--color-gray-50) 0%, var(--color-white) 100%);
-  border-radius: var(--radius-xl);
-  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
-}
-
-.search-container {
-  position: relative;
-  max-width: 600px;
-  margin: 0 auto;
-}
-
-.search-input {
-  width: 100%;
-  padding: var(--space-lg) var(--space-2xl);
-  border: 2px solid var(--color-gray-200);
-  border-radius: 50px;
-  font-size: var(--font-size-base);
-  background: var(--color-white);
-  transition: all 0.3s ease;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
-}
-
-.search-input:focus {
-  outline: none;
-  border-color: var(--color-accent);
-  box-shadow: 0 0 0 4px rgba(245, 158, 11, 0.15), 0 4px 8px rgba(0, 0, 0, 0.1);
-  transform: translateY(-1px);
-}
-
-.search-input::placeholder {
-  color: var(--color-gray-400);
-  font-style: italic;
-}
 
 .quick-actions {
   display: grid;
@@ -545,8 +474,5 @@ onMounted(() => {
     padding: var(--space-xl);
   }
 
-  .search-input {
-    font-size: var(--font-size-base);
-  }
 }
 </style>
