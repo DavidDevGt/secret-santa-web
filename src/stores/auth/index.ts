@@ -172,24 +172,7 @@ export const useAuthStore = defineStore('auth', {
     },
 
     async initializeAuth() {
-      const storedUser = this.getStoredUser();
-      const storedToken = this.token;
-
-      // If we have a stored user and token, validate the token
-      if (storedUser && storedToken) {
-        try {
-          const tokenValidation = await authService.verifyToken();
-          if (tokenValidation.valid) {
-            this.user = storedUser;
-            return;
-          }
-        } catch (error) {
-          logger.warn('Token validation failed during initialization', { error });
-        }
-      }
-
-      // If no valid token/user, clear everything
-      this.logout();
+      this.user = this.getStoredUser();
     },
   },
 });
