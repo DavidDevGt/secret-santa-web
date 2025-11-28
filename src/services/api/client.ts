@@ -1,4 +1,5 @@
 import type { ApiError } from '@/types/api';
+import { logger } from '@/utils/logger';
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
 
@@ -52,7 +53,7 @@ export class ApiClient {
       const requestKey = this.generateRequestKey(endpoint, options.method || 'GET', options.body);
 
       if (this.pendingRequests.has(requestKey)) {
-        console.log(`Deduplicating request: ${requestKey}`);
+        logger.debug(`Deduplicating request: ${requestKey}`);
         return this.pendingRequests.get(requestKey);
       }
 
@@ -97,7 +98,7 @@ export class ApiClient {
 
         // Handle forbidden errors (insufficient permissions)
         if (response.status === 403) {
-          console.warn('Access denied - insufficient permissions');
+          logger.warn('Access denied - insufficient permissions');
           // Could show a toast notification here if available
         }
 
@@ -114,7 +115,7 @@ export class ApiClient {
       // Retry logic for network errors and 5xx server errors
       if (retryCount < maxRetries && this.shouldRetry(error, response)) {
         const delay = baseDelay * Math.pow(2, retryCount); // Exponential backoff
-        console.log(`Retrying request in ${delay}ms (attempt ${retryCount + 1}/${maxRetries})`);
+        logger.debug(`Retrying request in ${delay}ms (attempt ${retryCount + 1}/${maxRetries})`);
         await new Promise(resolve => setTimeout(resolve, delay));
         return this.executeRequest<T>(url, config, retryCount + 1);
       }

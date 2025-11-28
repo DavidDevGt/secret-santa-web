@@ -3,6 +3,7 @@ import type { User, Permission } from '@/types/domain';
 import type { User as ApiUser, LoginRequest, RegisterRequest, VerifyOtpRequest, VerifyRequest } from '@/types/api';
 import { authService } from '@/services/api/auth';
 import { getUserPermissions, hasPermission as checkPermission, hasAnyPermission, hasAllPermissions } from './utils';
+import { logger } from '@/utils/logger';
 
 export const useAuthStore = defineStore('auth', {
   state: () => ({
@@ -97,7 +98,7 @@ export const useAuthStore = defineStore('auth', {
     async register(data: RegisterRequest) {
       // Prevent duplicate registration attempts
       if (this.loading) {
-        console.warn('Registration already in progress');
+        logger.warn('Registration already in progress');
         return;
       }
 
@@ -135,7 +136,7 @@ export const useAuthStore = defineStore('auth', {
     async login(data: LoginRequest) {
       // Prevent duplicate login attempts
       if (this.loading) {
-        console.warn('Login already in progress');
+        logger.warn('Login already in progress');
         return;
       }
 

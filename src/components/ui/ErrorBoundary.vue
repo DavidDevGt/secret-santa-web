@@ -16,6 +16,7 @@
 <script setup lang="ts">
 import { ref, onErrorCaptured } from 'vue';
 import Button from './Button.vue';
+import { logger } from '@/utils/logger';
 
 const hasError = ref(false);
 const error = ref<Error | null>(null);
@@ -28,7 +29,7 @@ const resetError = () => {
 onErrorCaptured((err) => {
   hasError.value = true;
   error.value = err as Error;
-  console.error('Error boundary caught an error:', err);
+  logger.error('Error boundary caught an error', { error: err });
   return false; // Prevent the error from propagating further
 });
 </script>

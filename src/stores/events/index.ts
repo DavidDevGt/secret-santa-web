@@ -6,6 +6,7 @@ import { eventService } from '@/services/api/events';
 import { participantService } from '@/services/api/participants';
 import { assignmentService } from '@/services/api/assignments';
 import { useAuthStore } from '../auth';
+import { logger } from '@/utils/logger';
 
 export const useEventStore = defineStore('events', () => {
   // State
@@ -58,7 +59,7 @@ export const useEventStore = defineStore('events', () => {
       const authStore = useAuthStore();
 
       if (!authStore.user) {
-        console.warn('Cannot fetch events: user not authenticated');
+        logger.warn('Cannot fetch events: user not authenticated');
         events.value = [];
         return;
       }
@@ -67,10 +68,10 @@ export const useEventStore = defineStore('events', () => {
         enrichEventWithPermissions(event as Event, authStore.user!)
       );
 
-      console.log(`Fetched ${events.value.length} events for user ${authStore.user.email}`);
+      logger.debug(`Fetched ${events.value.length} events for user ${authStore.user.email}`);
     } catch (err) {
       error.value = (err as Error).message;
-      console.error('Failed to fetch events:', err);
+      logger.error('Failed to fetch events', { error: err });
       throw err;
     } finally {
       loading.value = false;

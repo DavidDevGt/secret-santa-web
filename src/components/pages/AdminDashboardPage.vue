@@ -155,6 +155,7 @@ import { useAdminStore } from '@/stores/admin/index';
 import { api } from '@/services/api';
 import Button from '@/components/ui/Button.vue';
 import type { AdminDashboardStats } from '@/services/api/admin';
+import { logger } from '@/utils/logger';
 
 const router = useRouter();
 const adminStore = useAdminStore();
@@ -209,7 +210,7 @@ const checkHealth = async () => {
     healthStatus.value.readinessTimestamp = new Date().toISOString();
     healthStatus.value.readinessError = readinessData.error || '';
   } catch (error) {
-    console.error('Health check failed:', error);
+    logger.error('Health check failed', { error });
     healthStatus.value.liveness = false;
     healthStatus.value.readiness = false;
     healthStatus.value.livenessTimestamp = new Date().toISOString();

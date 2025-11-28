@@ -71,6 +71,7 @@ import { useAuthStore } from '@/stores/auth';
 import { useEventStore } from '@/stores/events';
 import type { MyAssignment } from '@/types/api';
 import ChristmasGiftModal from '@/components/ui/ChristmasGiftModal.vue';
+import { logger } from '@/utils/logger';
 
 const authStore = useAuthStore();
 const eventStore = useEventStore();
@@ -81,19 +82,23 @@ const modalMessage = ref('');
 
 // Ensure events are loaded when dashboard mounts
 onMounted(async () => {
-  console.log('Dashboard mounted, authenticated:', authStore.isAuthenticated);
-  console.log('Current user:', authStore.user);
-  console.log('Events count:', eventStore.eventsCount);
-  console.log('User events count:', eventStore.userEvents.length);
+  logger.debug('Dashboard mounted', {
+    authenticated: authStore.isAuthenticated,
+    user: authStore.user,
+    eventsCount: eventStore.eventsCount,
+    userEventsCount: eventStore.userEvents.length
+  });
 
   if (authStore.isAuthenticated && eventStore.eventsCount === 0) {
-    console.log('Fetching events from dashboard...');
+    logger.debug('Fetching events from dashboard');
     try {
       await eventStore.fetchEvents();
-      console.log('Events fetched, new count:', eventStore.eventsCount);
-      console.log('User events:', eventStore.userEvents.length);
+      logger.debug('Events fetched successfully', {
+        eventsCount: eventStore.eventsCount,
+        userEventsCount: eventStore.userEvents.length
+      });
     } catch (error) {
-      console.error('Failed to load events in dashboard:', error);
+      logger.error('Failed to load events in dashboard', { error });
     }
   }
 
@@ -107,10 +112,10 @@ const loadAssignments = async () => {
   loadingAssignments.value = true;
   try {
     assignments.value = await eventStore.fetchMyAssignment();
-    console.log('Loaded assignments:', assignments.value.length);
+    logger.debug('Loaded assignments', { count: assignments.value.length });
   } catch (error) {
     assignments.value = [];
-    console.log('User has no assignments yet');
+    logger.debug('User has no assignments yet');
   } finally {
     loadingAssignments.value = false;
   }
